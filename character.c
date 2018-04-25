@@ -11,7 +11,7 @@ character_t* character_init(character_kind_t kind)
   character_set_speed(c,0,0);
   c->life=100;
   c->pose_id=0;
-
+  c->on_constraint=0;
   return c;
 }
 

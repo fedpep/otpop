@@ -8,6 +8,7 @@ typedef enum
   RABBIT
 } character_kind_t;
 
+
 typedef struct
   {
     float pos[2];
@@ -16,6 +17,7 @@ typedef struct
     uint16_t pose_id;
     character_kind_t kind;
     uint8_t life;
+    uint8_t on_constraint;
   } character_t;
 
 

@@ -14,14 +14,16 @@
 #endif
 
 static keyboard_key_t k_prec=0;
-
 static uint32_t last_t=0;
 
 
-static void motion_apply_external_acc(float* acc,keyboard_key_t k)
+static void motion_apply_external_acc(float* acc, uint8_t on_a_constraint, keyboard_key_t k)
 {
   uint32_t i;
   
+  if(!IS_ON_A_FLOOR(on_a_constraint))
+    return;
+
   for(i=0;i<4;i++)
     {
       switch(k & (1<<i))
@@ -29,17 +31,17 @@ static void motion_apply_external_acc(float* acc,keyboard_key_t k)
 	case UP:
 	  if(!(k_prec & UP))
 	    {
-	      acc[1]+=-4*G_ACC;//EXT_ACCEL;
+	      acc[1]+=EXT_ACCEL_Y;
 	    }
 	  break;
 	case DOWN:
 	  //acc[1]-=EXT_ACCEL;
 	  break;
-	case RIGHT:
-	  acc[0]+=EXT_ACCEL;
+	case RIGHT:    
+	  acc[0]+=EXT_ACCEL_X;
 	  break;
 	case LEFT:
-	  acc[0]-=EXT_ACCEL;
+	  acc[0]-=EXT_ACCEL_X;
 	  break;
 	}
     }
@@ -53,10 +55,15 @@ static void motion_apply_gravity(float *acc)
   acc[1]+=G_ACC;
 }
 
-static void motion_apply_friction(float *acc, float *vel)
+static void motion_apply_friction(float *acc, float *vel, uint8_t on_a_constraint)
 {
-  acc[0]+=-B_FRIC*vel[0];
-  acc[1]+=-B_FRIC*vel[1];
+  float b=B_FRIC_AIR;
+  
+  if(IS_ON_A_FLOOR(on_a_constraint))
+    b=B_FRIC_FLOOR;
+
+  acc[0]+=-b*vel[0];
+  acc[1]+=-b*vel[1];
 }
 
 static void motion_apply_spring(float *acc, float *pos)
@@ -71,11 +78,12 @@ static void integrate_over_time(float *state, float *input)
   state[1]+=input[1]*DT;
 }
 
-static void motion_apply_constraint(float *pos, float *vel, float *acc)
+static uint8_t motion_apply_constraint(float *pos, float *vel, float *acc)
 {
   int32_t positive_cross,negative_cross;
   float pos_p[2];
   constraint_t* constraint;
+  uint8_t on_a_constraint=0;
 
   constraint=level_get_constraint_list();
 
@@ -85,6 +93,8 @@ static void motion_apply_constraint(float *pos, float *vel, float *acc)
   pos_p[0]=pos[0]-vel[0]*DT;
   pos_p[1]=pos[1]-vel[1]*DT;
   
+
+
   //printf("****\ny_prec: %f\n",pos_y_p);
   printf("****\n");
   
@@ -102,9 +112,14 @@ static void motion_apply_constraint(float *pos, float *vel, float *acc)
 	    {
 	      printf("floor constr\n");
 	      pos[1]=constraint->p_start[1]+positive_cross-negative_cross;
-	      vel[1]=0;//-vel[1];
+#ifdef ELASTIC_COLLISIONS
+	      vel[1]=-vel[1];
+#else
+	      vel[1]=0;
+#endif
 	      acc[1]=0;//-G_ACC;//-acc[1];
 	      //return;
+	      on_a_constraint|=ON_A_FLOOR;
 	    }
 	
 	}
@@ -122,9 +137,14 @@ static void motion_apply_constraint(float *pos, float *vel, float *acc)
 	    {
 	      printf("wall constr\n");
 	      pos[0]=constraint->p_start[0]+positive_cross-negative_cross;
-	      vel[0]=0;//-vel[0];
+#ifdef ELASTIC_COLLISIONS
+	      vel[0]=-vel[0];
+#else
+	      vel[0]=0;
+#endif
 	      acc[0]=0;//-acc[0];
 	      //return;
+	      on_a_constraint|=ON_A_WALL;
 	    }
 	}
 
@@ -133,6 +153,7 @@ static void motion_apply_constraint(float *pos, float *vel, float *acc)
       constraint=constraint->next;
     }
   
+  return on_a_constraint;
 }
 
 void motion_move_character(character_t* c, keyboard_key_t k)
@@ -146,19 +167,15 @@ void motion_move_character(character_t* c, keyboard_key_t k)
   
   c->acc[0]=0;
   c->acc[1]=0;
-  
-  
-
-  
-  
-  motion_apply_friction(c->acc,c->pos_dot);
-  motion_apply_external_acc(c->acc,k);
+    
+  motion_apply_friction(c->acc,c->pos_dot,c->on_constraint);
+  motion_apply_external_acc(c->acc,c->on_constraint,k);
   motion_apply_gravity(c->acc);
   
   integrate_over_time(c->pos_dot, c->acc);
   integrate_over_time(c->pos, c->pos_dot);
   
-  motion_apply_constraint(c->pos, c->pos_dot, c->acc);
+  c->on_constraint=motion_apply_constraint(c->pos, c->pos_dot, c->acc);
   
   
   PRINTF("---------------\ndt=%d ms\n",DT);

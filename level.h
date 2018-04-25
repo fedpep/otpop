@@ -5,6 +5,12 @@ typedef struct constraint_struct
   struct constraint_struct *next;
 } constraint_t;
 
+#define ON_A_FLOOR 0x01
+#define ON_A_WALL  0x02
+
+#define IS_ON_A_WALL(OC)   (OC & ON_A_WALL)
+#define IS_ON_A_FLOOR(OC)  (OC & ON_A_FLOOR)
+
 
 #define IS_A_FLOOR(C_POINT) ((C_POINT)->p_start[1]==(C_POINT)->p_end[1])
 #define IS_A_WALL(C_POINT)  ((C_POINT)->p_start[0]==(C_POINT)->p_end[0])

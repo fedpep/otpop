@@ -12,23 +12,13 @@ void main(void)
   
   level_init(1);
 
-  //int i=0;
   graph_init();
   
-  
-
   while(1)
     {
-      
-      //printf("loop %d\n",i++);
       k=keyboard_check();
       motion_move_character(c,k);
       graph_update(c);
-
-
-	
-      //if(k)
-      //printf ("hit %d\n",k);
     }
   
 

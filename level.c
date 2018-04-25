@@ -26,7 +26,7 @@ static void level_add_to_constraints_list(constraint_t* c)
 static void level_populate_constraints(void)
 {
   FILE* fp;
-  char file_name[12];
+  char file_name[20];
   constraint_t* c;
   int i=0;
 

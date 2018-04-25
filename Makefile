@@ -4,7 +4,7 @@ LD = gcc
 RM = rm -f
 
 CFLAGS=-I/usr/include/SDL
-LDFLAGS=-lSDL -lpthread -lm
+LDFLAGS=-lSDL -lpthread
 H_FILES=keyboard.h graph.h character.h motion.h level.h
 OBJ=keyboard.o main.o graph.o character.o motion.o level.o
 BIN=fgame
