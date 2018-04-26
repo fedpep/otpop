@@ -71,11 +71,13 @@ static void motion_apply_spring(body_t *b)
   b->acc[1]+=-K_HOOK*b->pos[1];
 }
 
-static void integrate_over_time(body_t *b)
+static void motion_integrate_over_time(body_t *b)
 {
+  /* compute the new speeds */
   b->pos_dot[0]+=b->acc[0]*DT;
   b->pos_dot[1]+=b->acc[1]*DT;
 
+  /* compute the new positions */
   b->pos[0]+=b->pos_dot[0]*DT;
   b->pos[1]+=b->pos_dot[1]*DT;
   
@@ -195,7 +197,7 @@ void motion_move_body(body_t* b, keyboard_key_t k)
   motion_apply_friction(b);
   motion_apply_external_acc(b,k);
   motion_apply_gravity(b);
-  integrate_over_time(b);
+  motion_integrate_over_time(b);
   motion_apply_constraint(b);
   
   
