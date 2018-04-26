@@ -1,3 +1,8 @@
+#ifndef _MOTION_H_
+#define _MOTION_H_
+
+#include "keyboard.h"
+
 #define G_ACC              (-0.3f)
 #define EXT_ACCEL_X        (0.4f)
 #define EXT_ACCEL_Y        (-G_ACC*6)
@@ -8,5 +13,17 @@
 
 //#define ELASTIC_COLLISIONS
 
+typedef struct
+{
+  float pos[2];
+  float pos_dot[2];
+  float acc[2];
+  uint8_t on_constraint;
+} body_t;
 
-void motion_move_character(character_t* c, keyboard_key_t k);
+void motion_set_pos(body_t *b, float *pos);
+void motion_set_pos_dot(body_t *b, float *pos_dot);
+void motion_init_body(body_t *b);
+void motion_move_body(body_t* b, keyboard_key_t k);
+
+#endif

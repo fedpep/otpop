@@ -149,9 +149,9 @@ void graph_update(character_t *c)
 
   SDL_FillRect(screen, NULL, 0x221122);
   
-  graph_update_quadrant(c->pos);
+  graph_update_quadrant(c->body.pos);
   
-  graph_calculate_screen_coordinates(c->pos[0],c->pos[1],&logoRect.x,&logoRect.y);
+  graph_calculate_screen_coordinates(c->body.pos[0],c->body.pos[1],&logoRect.x,&logoRect.y);
   logoRect.x-=logoRect.w/2;
   logoRect.y-=logoRect.h;
   
