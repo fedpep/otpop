@@ -93,33 +93,33 @@ static void graph_calculate_screen_coordinates(int32_t x, int32_t y, int16_t *sx
   *sy=(int16_t)((HEIGHT-(int32_t)y/SCALE)%HEIGHT);
 }
 
-static void graph_draw_line(int x0, int y0, int x1, int y1, uint32_t pixel) {
+static void graph_draw_line(int32_t* p_start, int32_t* p_end, uint32_t pixel) {
 
   int i;
   int16_t x,y;
 
-  if(x0==x1)
+  if(p_start[0]==p_end[0])
     {
       PRINTF("v\n");
       /*vertical*/
-      for(i=y0;i<y1;i++)
+      for(i=p_start[1];i<=p_end[1];i++)
 	{
-	  if(point_is_in_quadrant(x0,i))
+	  if(point_is_in_quadrant(p_start[0],i))
 	    {
-	      graph_calculate_screen_coordinates(x0,i,&x,&y);
+	      graph_calculate_screen_coordinates(p_start[0],i,&x,&y);
 	      graph_put_pixel(x, y, pixel);
 	    }
 	}
     }
-  else if(y0==y1)
+  else if(p_start[1]==p_end[1])
     {
       PRINTF("h\n");
       /*horizontal*/
-      for(i=x0;i<x1;i++)
+      for(i=p_start[0];i<=p_end[0];i++)
 	{
-	  if(point_is_in_quadrant(i,y0))
+	  if(point_is_in_quadrant(i,p_start[1]))
 	    {
-	      graph_calculate_screen_coordinates(i,y0,&x,&y);
+	      graph_calculate_screen_coordinates(i,p_start[1],&x,&y);
 	      graph_put_pixel(x, y, pixel);
 	    }
 	}
@@ -161,7 +161,7 @@ void graph_update(character_t *c)
       if(constraint_is_in_quadrant(constraint))
 	{
 	  PRINTF("draw\n");
-	  graph_draw_line(constraint->p_start[0],constraint->p_start[1],constraint->p_end[0],constraint->p_end[1],0xffffff);
+	  graph_draw_line(constraint->p_start,constraint->p_end,0xffffff);
 	}
       constraint=constraint->next;
     }

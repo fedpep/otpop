@@ -89,7 +89,7 @@ static uint8_t motion_apply_constraint(float *pos, float *vel, float *acc)
 
   /* compute the previous position: the applied forces may modify 
      the status that we are going to correct with the constraint.
-     Thus, we need to evaluate the final if with the old position*/
+     Thus, we need to evaluate the constraint using the old position */
   pos_p[0]=pos[0]-vel[0]*DT;
   pos_p[1]=pos[1]-vel[1]*DT;
   
@@ -117,8 +117,7 @@ static uint8_t motion_apply_constraint(float *pos, float *vel, float *acc)
 #else
 	      vel[1]=0;
 #endif
-	      acc[1]=0;//-G_ACC;//-acc[1];
-	      //return;
+	      acc[1]=0;
 	      on_a_constraint|=ON_A_FLOOR;
 	    }
 	
@@ -142,8 +141,7 @@ static uint8_t motion_apply_constraint(float *pos, float *vel, float *acc)
 #else
 	      vel[0]=0;
 #endif
-	      acc[0]=0;//-acc[0];
-	      //return;
+	      acc[0]=0;
 	      on_a_constraint|=ON_A_WALL;
 	    }
 	}
@@ -160,7 +158,6 @@ void motion_move_character(character_t* c, keyboard_key_t k)
 {
   uint32_t dt,t=SDL_GetTicks();
 
-  
   dt=t-last_t;
   if(dt<DT)
     return;
@@ -171,10 +168,8 @@ void motion_move_character(character_t* c, keyboard_key_t k)
   motion_apply_friction(c->acc,c->pos_dot,c->on_constraint);
   motion_apply_external_acc(c->acc,c->on_constraint,k);
   motion_apply_gravity(c->acc);
-  
   integrate_over_time(c->pos_dot, c->acc);
   integrate_over_time(c->pos, c->pos_dot);
-  
   c->on_constraint=motion_apply_constraint(c->pos, c->pos_dot, c->acc);
   
   
@@ -182,8 +177,6 @@ void motion_move_character(character_t* c, keyboard_key_t k)
   PRINTF("position=%.3f,%.3f mm\n",c->pos[0],c->pos[1]);
   PRINTF("speed=%.6f,%.6f m/s\n",c->pos_dot[0],c->pos_dot[1]);
   PRINTF("acc=%.3f,%.3f m/s^2\n",c->acc[0],c->acc[1]);
-
-  
 
   last_t=t;
 }
