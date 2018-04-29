@@ -4,8 +4,6 @@
 
 character_t* character_init(character_kind_t kind)
 {
-  float z[2]={0,0};
-
   character_t *c;
   c=(character_t*) malloc(sizeof(character_t));
   

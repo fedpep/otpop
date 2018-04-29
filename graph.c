@@ -128,10 +128,10 @@ static void graph_draw_line(int32_t* p_start, int32_t* p_end, uint32_t pixel) {
 
 }
 
-void graph_update_quadrant(float *pos)
+void graph_update_quadrant(int32_t *pos)
 {
-  quadrant[0]=(int)pos[0]/SCALE/WIDTH;
-  quadrant[1]=(int)pos[1]/SCALE/HEIGHT;
+  quadrant[0]=pos[0]/SCALE/WIDTH;
+  quadrant[1]=pos[1]/SCALE/HEIGHT;
 
   if(pos[0]<0) quadrant[0]--;
   if(pos[1]<0) quadrant[1]--;

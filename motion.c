@@ -83,10 +83,10 @@ static void motion_integrate_over_time(body_t *b)
   
 }
 
-static uint8_t motion_apply_constraint(body_t *b)
+static void motion_apply_constraint(body_t *b)
 {
   int32_t positive_cross,negative_cross;
-  float pos_p[2];
+  int32_t pos_p[2];
   constraint_t* constraint;
   
   b->on_constraint=0;
@@ -99,8 +99,6 @@ static uint8_t motion_apply_constraint(body_t *b)
   pos_p[0]=b->pos[0]-b->pos_dot[0]*DT;
   pos_p[1]=b->pos[1]-b->pos_dot[1]*DT;
   
-
-
   //printf("****\ny_prec: %f\n",pos_y_p);
   printf("****\n");
   
@@ -109,8 +107,8 @@ static uint8_t motion_apply_constraint(body_t *b)
       if(IS_A_FLOOR(constraint))
 	{
 	  
-	  positive_cross=(int)b->pos[1]<=(int)constraint->p_start[1] && (int)pos_p[1]>=(int)constraint->p_start[1];
-      	  negative_cross=(int)b->pos[1]>=(int)constraint->p_start[1] && (int)pos_p[1]<=(int)constraint->p_start[1];
+	  positive_cross=b->pos[1]<=constraint->p_start[1] && pos_p[1]>=constraint->p_start[1];
+      	  negative_cross=b->pos[1]>=constraint->p_start[1] && pos_p[1]<=constraint->p_start[1];
 
 	  if(pos_p[0]>=constraint->p_start[0] && 
 	     pos_p[0]<=constraint->p_end[0] && 
@@ -133,11 +131,11 @@ static uint8_t motion_apply_constraint(body_t *b)
 	{
 	  
 	  //printf("--- %d, %d\n",(int)b->pos[0]<=(int)constraint->p_start[0] , (int)pos_p[0]>=(int)constraint->p_start[0]);
-	  positive_cross=(int)b->pos[0]<=(int)constraint->p_start[0] && (int)pos_p[0]>=(int)constraint->p_start[0];
-      	  negative_cross=(int)b->pos[0]>=(int)constraint->p_start[0] && (int)pos_p[0]<=(int)constraint->p_start[0];
+	  positive_cross=b->pos[0]<=constraint->p_start[0] && pos_p[0]>=constraint->p_start[0];
+      	  negative_cross=b->pos[0]>=constraint->p_start[0] && pos_p[0]<=constraint->p_start[0];
       
-	  if((int)pos_p[1]>=(int)constraint->p_start[1] && 
-	     (int)pos_p[1]<=(int)constraint->p_end[1] && 
+	  if(pos_p[1]>=constraint->p_start[1] && 
+	     pos_p[1]<=constraint->p_end[1] && 
 	     (positive_cross || negative_cross))
 	    {
 	      printf("wall constr\n");
@@ -161,7 +159,7 @@ static uint8_t motion_apply_constraint(body_t *b)
   
 }
 
-void motion_set_pos(body_t *b, float *pos)
+void motion_set_pos(body_t *b, int32_t *pos)
 {
   b->pos[0]=pos[0];
   b->pos[1]=pos[1];
@@ -175,21 +173,22 @@ void motion_set_pos_dot(body_t *b, float *pos_dot)
 
 void motion_init_body(body_t *b)
 {
-  float z[2]={0,0};
+  float z_dot[2]={0,0};
+  int32_t z[2]={0,0};
 
   motion_set_pos(b, z);
-  motion_set_pos_dot(b, z);
+  motion_set_pos_dot(b, z_dot);
 
   b->on_constraint=0;
 }
 
-void motion_move_body(body_t* b, keyboard_key_t k)
+uint8_t motion_move_body(body_t* b, keyboard_key_t k)
 {
   uint32_t dt,t=SDL_GetTicks();
 
   dt=t-last_t;
   if(dt<DT)
-    return;
+    return 0;
   
   b->acc[0]=0;
   b->acc[1]=0;
@@ -202,11 +201,13 @@ void motion_move_body(body_t* b, keyboard_key_t k)
   
   
   PRINTF("---------------\ndt=%d ms\n",DT);
-  PRINTF("position=%.3f,%.3f mm\n",b->pos[0],b->pos[1]);
+  PRINTF("position=%d,%d mm\n",b->pos[0],b->pos[1]);
   PRINTF("speed=%.6f,%.6f m/s\n",b->pos_dot[0],b->pos_dot[1]);
   PRINTF("acc=%.3f,%.3f m/s^2\n",b->acc[0],b->acc[1]);
 
   last_t=t;
+
+  return 1;
 }
 
 
