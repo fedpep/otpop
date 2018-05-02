@@ -12,8 +12,8 @@
 #define PRINTF
 #endif
 
-static keyboard_key_t k_prec=0;
-static uint32_t last_t=0;
+
+
 
 
 static void motion_apply_external_acc(body_t *b, keyboard_key_t k)
@@ -28,7 +28,7 @@ static void motion_apply_external_acc(body_t *b, keyboard_key_t k)
       switch(k & (1<<i))
 	{
 	case UP:
-	  if(!(k_prec & UP))
+	  if(!(b->last_k & UP))
 	    {
 	      b->acc[1]+=EXT_ACCEL_Y;
 	    }
@@ -45,7 +45,7 @@ static void motion_apply_external_acc(body_t *b, keyboard_key_t k)
 	}
     }
   
-  k_prec=k;
+  b->last_k=k;
 }
 
 static void motion_apply_gravity(body_t *b)
@@ -71,22 +71,22 @@ static void motion_apply_spring(body_t *b)
   b->acc[1]+=-K_HOOK*b->pos[1];
 }
 
-static void motion_integrate_over_time(body_t *b)
+static void motion_integrate_over_time(body_t *b, uint32_t dt)
 {
   /* compute the new speeds */
-  b->pos_dot[0]+=b->acc[0]*DT;
-  b->pos_dot[1]+=b->acc[1]*DT;
+  b->pos_dot[0]+=b->acc[0]*dt;
+  b->pos_dot[1]+=b->acc[1]*dt;
 
   /* compute the new positions */
-  b->pos[0]+=b->pos_dot[0]*DT;
-  b->pos[1]+=b->pos_dot[1]*DT;
+  b->pos[0]+=b->pos_dot[0]*dt;
+  b->pos[1]+=b->pos_dot[1]*dt;
   
 }
 
-static void motion_apply_constraint(body_t *b)
+static void motion_apply_constraint(body_t *b, uint32_t dt)
 {
   int32_t positive_cross,negative_cross;
-  int32_t pos_p[2];
+  float pos_p[2];
   constraint_t* constraint;
   
   b->on_constraint=0;
@@ -96,8 +96,8 @@ static void motion_apply_constraint(body_t *b)
   /* compute the previous position: the applied forces may modify 
      the status that we are going to correct with the constraint.
      Thus, we need to evaluate the constraint using the old position */
-  pos_p[0]=b->pos[0]-b->pos_dot[0]*DT;
-  pos_p[1]=b->pos[1]-b->pos_dot[1]*DT;
+  pos_p[0]=b->pos[0]-b->pos_dot[0]*dt;
+  pos_p[1]=b->pos[1]-b->pos_dot[1]*dt;
   
   //printf("****\ny_prec: %f\n",pos_y_p);
   printf("****\n");
@@ -142,6 +142,7 @@ static void motion_apply_constraint(body_t *b)
 	      b->pos[0]=constraint->p_start[0]+positive_cross-negative_cross;
 #ifdef ELASTIC_COLLISIONS
 	      b->pos_dot[0]=-b->pos_dot[0];
+	      
 #else
 	      b->pos_dot[0]=0;
 #endif
@@ -150,7 +151,7 @@ static void motion_apply_constraint(body_t *b)
 	    }
 	}
 
-      //printf("x=%d, x_p=%d, y=%d, y_p=%d, p_start[1]=%d,p_end[1]=%d,p_start[0]=%d\n",(int)b->pos[0],(int)pos_p[0],(int)b->pos[1],(int)pos_p[1],(int)constraint->p_start[1],(int)constraint->p_end[1],(int)constraint->p_start[0]);
+      //PRINTF("x=%d, x_p=%d, y=%d, y_p=%d, p_start[1]=%d,p_end[1]=%d,p_start[0]=%d, pos_cross=%d, neg_cross=%d\n",(int)b->pos[0],(int)pos_p[0],(int)b->pos[1],(int)pos_p[1],(int)constraint->p_start[1],(int)constraint->p_end[1],(int)constraint->p_start[0], positive_cross, negative_cross);
 
       constraint=constraint->next;
     }
@@ -180,32 +181,34 @@ void motion_init_body(body_t *b)
   motion_set_pos_dot(b, z_dot);
 
   b->on_constraint=0;
+  b->last_t=SDL_GetTicks();
+  b->last_k=0;
 }
 
 uint8_t motion_move_body(body_t* b, keyboard_key_t k)
 {
   uint32_t dt,t=SDL_GetTicks();
 
-  dt=t-last_t;
+  dt=t-b->last_t;
   if(dt<DT)
     return 0;
   
   b->acc[0]=0;
   b->acc[1]=0;
-    
-  motion_apply_friction(b);
+  
   motion_apply_external_acc(b,k);
+  motion_apply_friction(b);
   motion_apply_gravity(b);
-  motion_integrate_over_time(b);
-  motion_apply_constraint(b);
+  motion_integrate_over_time(b,dt);
+  motion_apply_constraint(b,dt);
   
   
-  PRINTF("---------------\ndt=%d ms\n",DT);
+  PRINTF("---------------\ndt=%d ms\n",dt);
   PRINTF("position=%d,%d mm\n",b->pos[0],b->pos[1]);
   PRINTF("speed=%.6f,%.6f m/s\n",b->pos_dot[0],b->pos_dot[1]);
   PRINTF("acc=%.3f,%.3f m/s^2\n",b->acc[0],b->acc[1]);
 
-  last_t=t;
+  b->last_t=t;
 
   return 1;
 }

@@ -18,8 +18,7 @@
 
 static SDL_Surface *screen=NULL,*logo;
 static uint32_t quadrant[2]={0,0};
-
-SDL_Rect logoRect;
+static SDL_Rect logoRect;
 
 
 void graph_init(void)
@@ -141,19 +140,20 @@ void graph_update_quadrant(int32_t *pos)
 
 
 
-void graph_update(character_t *c)
+void graph_update(void)
 {
   constraint_t* constraint;
-  
+  character_t* character=character_get_main();
+
   constraint=level_get_constraint_list();
 
   SDL_FillRect(screen, NULL, 0x221122);
   
-  graph_update_quadrant(c->body.pos);
-  
-  graph_calculate_screen_coordinates(c->body.pos[0],c->body.pos[1],&logoRect.x,&logoRect.y);
+  graph_update_quadrant(character->body.pos);
+  graph_calculate_screen_coordinates(character->body.pos[0],character->body.pos[1],&logoRect.x,&logoRect.y);
   logoRect.x-=logoRect.w/2;
   logoRect.y-=logoRect.h;
+  
   
   PRINTF("------\n");
   while(constraint)

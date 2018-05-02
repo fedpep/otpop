@@ -17,7 +17,6 @@ static level_t current_level;
 static void level_add_to_constraints_list(constraint_t* c)
 {
   constraint_t* aux;
-  
   aux=current_level.constraint_list;
   current_level.constraint_list=c;
   c->next=aux;
@@ -37,12 +36,19 @@ static void level_populate_constraints(void)
     {
       c=(constraint_t*)malloc(sizeof(constraint_t));
 
-      if(!fscanf(fp, "%d %d %d %d\n",&c->p_start[0],&c->p_start[1], &c->p_end[0], &c->p_end[1]))	
+      if(!fscanf(fp, "%d %d %d %d\n",
+		 &c->p_start[0],
+		 &c->p_start[1], 
+		 &c->p_end[0], 
+		 &c->p_end[1]))	
 	  break;
 
       level_add_to_constraints_list(c);
 
-      printf("constr: %d, %d, %d, %d\n",c->p_start[0],c->p_start[1], c->p_end[0], c->p_end[1]);
+      printf("constr: %d, %d, %d, %d\n",c->p_start[0],
+	     c->p_start[1], 
+	     c->p_end[0], 
+	     c->p_end[1]);
       
       
     }
@@ -53,7 +59,6 @@ static void level_populate_constraints(void)
 
 void level_init(uint32_t num)
 {
-  
   current_level.level_num=num;
   current_level.constraint_list=NULL;
   

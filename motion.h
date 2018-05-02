@@ -19,6 +19,8 @@ typedef struct
   float pos_dot[2];
   float acc[2];
   uint8_t on_constraint;
+  uint32_t last_t;
+  keyboard_key_t last_k;
 } body_t;
 
 void motion_set_pos(body_t *b, int32_t *pos);
