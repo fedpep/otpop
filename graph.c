@@ -1,6 +1,7 @@
 #include <SDL.h>
 #include "character.h"
 #include "level.h"
+#include "graph.h"
 
 #define WIDTH 640
 #define HEIGHT 480
@@ -16,9 +17,15 @@
 #endif
 
 
-static SDL_Surface *screen=NULL,*logo;
+static SDL_Surface *screen=NULL;
 static uint32_t quadrant[2]={0,0};
-static SDL_Rect logoRect;
+
+typedef struct
+{
+  SDL_Surface *fig_surf;
+  SDL_Rect fig_rect;
+} figure_t;
+
 
 
 void graph_init(void)
@@ -42,19 +49,39 @@ void graph_init(void)
   /* Enable Unicode translation */
   SDL_EnableUNICODE( 1 );
 
-  //logo = SDL_LoadBMP("./ball.bmp");
-  logo=SDL_LoadBMP("./logo.bmp");
-  if(!logo)
-    {
-      fprintf( stderr, "Could not load image: %s\n", SDL_GetError() );
-      SDL_Quit();
-      exit( -1 );
-    }
- 
   
   atexit(SDL_Quit);
 
 }
+
+void* graph_init_figure(character_kind_t kind)
+{
+  figure_t* fig_ptr;
+
+  fig_ptr=(figure_t*) malloc(sizeof(figure_t));
+
+  switch(kind)
+    {
+    case KID:
+      fig_ptr->fig_surf=SDL_LoadBMP("./blue_rect.bmp");
+      break;
+    case GUARD:
+      fig_ptr->fig_surf=SDL_LoadBMP("./orange_rect.bmp");
+      break;
+    case VIZIR:
+      fig_ptr->fig_surf=SDL_LoadBMP("./red_rect.bmp");
+      break;
+    }
+  if(!fig_ptr->fig_surf)
+    {
+      fprintf( stderr, "Could not load image: %s\n", SDL_GetError() );
+      return NULL;
+    }
+ 
+  
+  return (void*)fig_ptr;
+}
+
 
 static uint8_t point_is_in_quadrant(int32_t x, int32_t y)
 {
@@ -73,6 +100,10 @@ static uint8_t constraint_is_in_quadrant(constraint_t* c)
   return (point_is_in_quadrant(c->p_start[0],c->p_start[1]) || point_is_in_quadrant(c->p_end[0],c->p_end[1]));
 }
 
+static uint8_t character_is_in_quadrant(character_t* c)
+{ 
+  return point_is_in_quadrant(c->body.pos[0],c->body.pos[1]);
+}
 
 static void graph_put_pixel(int x, int y, uint32_t pixel) {
     int byteperpixel = screen->format->BytesPerPixel;
@@ -144,18 +175,33 @@ void graph_update(void)
 {
   constraint_t* constraint;
   character_t* character=character_get_main();
-
-  constraint=level_get_constraint_list();
+  figure_t* fig_ptr = (figure_t*)character->figure_ptr;
 
   SDL_FillRect(screen, NULL, 0x221122);
   
   graph_update_quadrant(character->body.pos);
-  graph_calculate_screen_coordinates(character->body.pos[0],character->body.pos[1],&logoRect.x,&logoRect.y);
-  logoRect.x-=logoRect.w/2;
-  logoRect.y-=logoRect.h;
-  
+
+  graph_calculate_screen_coordinates(character->body.pos[0],character->body.pos[1],&fig_ptr->fig_rect.x,&fig_ptr->fig_rect.y);
+  fig_ptr->fig_rect.x-=fig_ptr->fig_rect.w/2;
+  fig_ptr->fig_rect.y-=fig_ptr->fig_rect.h;
+  SDL_BlitSurface(fig_ptr->fig_surf , NULL , screen , &fig_ptr->fig_rect);
+
+  character=character_get_list();
+  while(character)
+    {
+      if(character_is_in_quadrant(character))
+	{
+	  fig_ptr = (figure_t*)character->figure_ptr;
+	  graph_calculate_screen_coordinates(character->body.pos[0],character->body.pos[1],&fig_ptr->fig_rect.x,&fig_ptr->fig_rect.y);
+	  fig_ptr->fig_rect.x-=fig_ptr->fig_rect.w/2;
+	  fig_ptr->fig_rect.y-=fig_ptr->fig_rect.h;
+	  SDL_BlitSurface(fig_ptr->fig_surf , NULL , screen , &fig_ptr->fig_rect);
+	}
+      character=character->next;
+    }
   
   PRINTF("------\n");
+  constraint=level_get_constraint_list();
   while(constraint)
     {
       if(constraint_is_in_quadrant(constraint))
@@ -166,7 +212,7 @@ void graph_update(void)
       constraint=constraint->next;
     }
 
-  SDL_BlitSurface( logo , NULL , screen , &logoRect );
+  
   SDL_Flip(screen);
   
 }
