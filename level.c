@@ -48,9 +48,7 @@ static void level_populate_constraints(void)
       printf("constr: %d, %d, %d, %d\n",c->p_start[0],
 	     c->p_start[1], 
 	     c->p_end[0], 
-	     c->p_end[1]);
-      
-      
+	     c->p_end[1]);      
     }
 
   fclose(fp);

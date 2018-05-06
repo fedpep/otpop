@@ -3,9 +3,9 @@
 #include "level.h"
 #include "graph.h"
 
-#define WIDTH 640
-#define HEIGHT 480
-#define SCALE 100
+#define WIDTH (640)
+#define HEIGHT (480)
+#define SCALE (100)
 
 //#define DEBUG
 
@@ -30,13 +30,22 @@ typedef struct
 
 void graph_init(void)
 {
+  uint32_t flags=SDL_DOUBLEBUF|SDL_HWSURFACE|SDL_ANYFORMAT;
+
+#ifdef FULLSCREEN
+  flags|=SDL_FULLSCREEN;
+#endif
+
   /* Initialise SDL */
   if( SDL_Init( SDL_INIT_VIDEO ) < 0){
     fprintf( stderr, "Could not initialise SDL: %s\n", SDL_GetError() );
     exit( -1 );
   }
   
-  screen=SDL_SetVideoMode( WIDTH, HEIGHT, 32 , SDL_DOUBLEBUF|SDL_HWSURFACE|SDL_ANYFORMAT);
+
+  screen=SDL_SetVideoMode( WIDTH, HEIGHT, 32 , flags);
+			   
+  SDL_ShowCursor(SDL_DISABLE);
 
   /* Set a video mode */
   if( !screen )
@@ -97,7 +106,8 @@ static uint8_t point_is_in_quadrant(int32_t x, int32_t y)
 
 static uint8_t constraint_is_in_quadrant(constraint_t* c)
 { 
-  return (point_is_in_quadrant(c->p_start[0],c->p_start[1]) || point_is_in_quadrant(c->p_end[0],c->p_end[1]));
+  /* TBF: this is not covering the case the line extreme points are in 2 different quandrant than this one */
+  return 1;//(point_is_in_quadrant(c->p_start[0],c->p_start[1]) || point_is_in_quadrant(c->p_end[0],c->p_end[1]));
 }
 
 static uint8_t character_is_in_quadrant(character_t* c)
@@ -105,15 +115,15 @@ static uint8_t character_is_in_quadrant(character_t* c)
   return point_is_in_quadrant(c->body.pos[0],c->body.pos[1]);
 }
 
-static void graph_put_pixel(int x, int y, uint32_t pixel) {
-    int byteperpixel = screen->format->BytesPerPixel;
-    uint8_t *p;
-    if(x>0 && x<WIDTH && y>0 && y<HEIGHT)
-      {
-	p = (uint8_t*)screen->pixels + y * screen->pitch + x * byteperpixel;
-	// Adress to pixel
-	*(uint32_t *)p = pixel;
-      }
+static void graph_put_pixel(uint32_t x, uint32_t y, uint32_t pixel) {
+  uint32_t byteperpixel = screen->format->BytesPerPixel;
+  uint8_t *p;
+  if(x>0 && x<WIDTH && y>0 && y<HEIGHT)
+    {
+      p = (uint8_t*)screen->pixels + y * screen->pitch + x * byteperpixel;
+      // Adress to pixel
+      *(uint32_t *)p = pixel;
+    }
 }
 
 
@@ -130,7 +140,7 @@ static void graph_draw_line(int32_t* p_start, int32_t* p_end, uint32_t pixel) {
 
   if(p_start[0]==p_end[0])
     {
-      PRINTF("v\n");
+      PRINTF("v line s=%d,e=%d\n",p_start[1],p_end[1]);
       /*vertical*/
       for(i=p_start[1];i<=p_end[1];i++)
 	{
@@ -143,7 +153,7 @@ static void graph_draw_line(int32_t* p_start, int32_t* p_end, uint32_t pixel) {
     }
   else if(p_start[1]==p_end[1])
     {
-      PRINTF("h\n");
+      PRINTF("h line s=%d,e=%d\n",p_start[0],p_end[0]);
       /*horizontal*/
       for(i=p_start[0];i<=p_end[0];i++)
 	{
@@ -196,6 +206,10 @@ void graph_update(void)
 	  fig_ptr->fig_rect.x-=fig_ptr->fig_rect.w/2;
 	  fig_ptr->fig_rect.y-=fig_ptr->fig_rect.h;
 	  SDL_BlitSurface(fig_ptr->fig_surf , NULL , screen , &fig_ptr->fig_rect);
+	  if(character->state==FIGHT)
+	    {
+	      SDL_FillRect( screen, &fig_ptr->fig_rect, 0xFF0000);
+	    }
 	}
       character=character->next;
     }
@@ -204,9 +218,11 @@ void graph_update(void)
   constraint=level_get_constraint_list();
   while(constraint)
     {
+      PRINTF("%d,%d, %d,%d\n",constraint->p_start[0],constraint->p_start[1],constraint->p_end[0],constraint->p_end[1]);
       if(constraint_is_in_quadrant(constraint))
 	{
-	  PRINTF("draw\n");
+	  PRINTF("  -->draw\n");
+
 	  graph_draw_line(constraint->p_start,constraint->p_end,0xffffff);
 	}
       constraint=constraint->next;

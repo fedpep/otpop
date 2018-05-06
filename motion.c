@@ -17,7 +17,7 @@
 #define ABS(x)  (((x)>=0)?(x):(-(x)))
 
 
-static void motion_apply_external_acc(body_t *b, keyboard_key_t k)
+static void motion_apply_external_acc(body_t *b,uint32_t t)
 {
   uint32_t i;
   
@@ -26,24 +26,68 @@ static void motion_apply_external_acc(body_t *b, keyboard_key_t k)
 
   for(i=0;i<4;i++)
     {
-      switch(k & (1<<i))
+      switch(b->key_pressed & (1<<i))
 	{
 	case UP:
 	  b->acc[1]+=EXT_ACCEL_Y;
+	  b->last_k_t=t;
 	  break;
 	case DOWN:
 	  //b->acc[1]-=EXT_ACCEL;
 	  break;
 	case RIGHT:    
 	  b->acc[0]+=EXT_ACCEL_X;
+	  b->last_k_t=t;
 	  break;
 	case LEFT:
 	  b->acc[0]-=EXT_ACCEL_X;
+	  b->last_k_t=t;
 	  break;
 	}
     }
-  
+
 }
+
+static void motion_apply_external_vel(body_t *b, uint32_t t)
+{
+  uint32_t i;
+  
+  b->vel[0]=0;
+
+  for(i=0;i<4;i++)
+    {
+      switch(b->key_pressed & (1<<i))
+	{
+	case UP:
+	  //b->vel[1]+=EXT_ACCEL_Y;
+	  break;
+	case DOWN:
+	  //b->vel[1]-=EXT_ACCEL;
+	  break;
+	case RIGHT:
+	  if(t-b->last_k_t>400)
+	    {
+	      b->vel[0]=EXT_VEL_X;
+	      printf("k time diff %d\n",t-b->last_k_t);
+	      b->last_k_t=t;
+	    }
+	  break;
+	case LEFT:
+	  if(t-b->last_k_t>400)
+	    {
+	      b->vel[0]=-EXT_VEL_X; 
+	      printf("k time diff %d\n",t-b->last_k_t);
+	      b->last_k_t=t;
+	    }
+	  break;
+	case SHIFT:
+	  
+	  break;
+	}
+    }
+
+}
+
 
 static void motion_apply_gravity(body_t *b)
 {
@@ -68,15 +112,23 @@ static void motion_apply_spring(body_t *b)
   b->acc[1]+=-K_HOOK*b->pos[1]/b->mass;
 }
 
-static void motion_integrate_over_time(body_t *b, uint32_t dt)
+static void motion_integrate_vel_over_time(body_t *b, uint32_t dt, uint8_t coordinate_flag)
 {
   /* compute the new speeds */
-  b->vel[0]+=b->acc[0]*dt;
-  b->vel[1]+=b->acc[1]*dt;
+  if(coordinate_flag & 1)
+    b->vel[0]+=b->acc[0]*dt;
+  
+  if(coordinate_flag & 2)
+    b->vel[1]+=b->acc[1]*dt;
+}
 
+static void motion_integrate_pos_over_time(body_t *b, uint32_t dt, uint8_t coordinate_flag)
+{
   /* compute the new positions */
-  b->pos[0]+=b->vel[0]*dt;
-  b->pos[1]+=b->vel[1]*dt;
+  if(coordinate_flag & 1)
+    b->pos[0]+=b->vel[0]*dt;
+  if(coordinate_flag & 2)
+    b->pos[1]+=b->vel[1]*dt;
   
 }
 
@@ -97,7 +149,7 @@ static void motion_apply_constraints(body_t *b, uint32_t dt)
   pos_p[1]=b->pos[1]-b->vel[1]*dt;
   
   //printf("****\ny_prec: %f\n",pos_y_p);
-  printf("****\n");
+  PRINTF("****\n");
   
   while(constraint)
     {
@@ -111,7 +163,7 @@ static void motion_apply_constraints(body_t *b, uint32_t dt)
 	     pos_p[0]<=constraint->p_end[0] && 
 	     (positive_cross || negative_cross))
 	    {
-	      printf("floor constr\n");
+	      PRINTF("floor constr\n");
 	      b->pos[1]=constraint->p_start[1]+positive_cross-negative_cross;
 #ifdef ELASTIC_COLLISIONS
 	      b->vel[1]=-b->vel[1];
@@ -135,7 +187,7 @@ static void motion_apply_constraints(body_t *b, uint32_t dt)
 	     pos_p[1]<=constraint->p_end[1] && 
 	     (positive_cross || negative_cross))
 	    {
-	      printf("wall constr\n");
+	      PRINTF("wall constr\n");
 	      b->pos[0]=constraint->p_start[0]+positive_cross-negative_cross;
 #ifdef ELASTIC_COLLISIONS
 	      b->vel[0]=-b->vel[0];
@@ -178,13 +230,14 @@ static void motion_apply_characters(body_t *b, uint32_t dt)
       /* we want to avoid to do the computation against ourself... move on in this case! */
       if(cb!=b)
 	{	  
-	  positive_cross=b->pos[0]<=cb->pos[0] && pos_p[0]>=cb->pos[0] && ABS(b->pos[1]-cb->pos[1])<=cb->dim[1]/2;// TBF: that number (60) should be dim[1]
+	  positive_cross=b->pos[0]<=cb->pos[0] && pos_p[0]>=cb->pos[0] && ABS(b->pos[1]-cb->pos[1])<=cb->dim[1]/2;
 	  negative_cross=b->pos[0]>=cb->pos[0] && pos_p[0]<=cb->pos[0] && ABS(b->pos[1]-cb->pos[1])<=cb->dim[1]/2;
   
 	  //printf("char motion: pos:%d, neg:%d, mass=%d\n",positive_cross, negative_cross, cb->mass);
 
 	  if(negative_cross || positive_cross)
 	    {
+	      /* we have an elastic collision: apply the formula to compute the new speeds from the conservation of kinetic energy and the momentum */
 	      aux=b->vel[0];
 	      b->vel[0]=((b->mass-cb->mass)*b->vel[0]+2*cb->mass*cb->vel[0])/(b->mass+cb->mass);
 	      cb->vel[0]=((cb->mass-b->mass)*cb->vel[0]+2*b->mass*aux)/(b->mass+cb->mass);
@@ -229,12 +282,15 @@ void motion_init_body(body_t *b, int32_t *dim, int32_t mass)
   motion_set_vel(b, z_dot);
   motion_set_dim(b, dim);
   
+  b->ctrl=CTRL_ACC;
   b->mass=mass;
   b->on_constraint=0;
+  b->key_pressed=NONE;
+  b->last_k_t=0;
   b->last_t=SDL_GetTicks();
 }
 
-uint8_t motion_move_body(body_t* b, keyboard_key_t k)
+uint8_t motion_move_body(body_t* b)
 {
   uint32_t dt,t=SDL_GetTicks();
 
@@ -242,20 +298,41 @@ uint8_t motion_move_body(body_t* b, keyboard_key_t k)
   if(dt<DT)
     return 0;
   
+  PRINTF("-----%lx-main=%d----\ndt=%d ms\n",(long unsigned int)b,b==&(character_get_main()->body),dt);
   b->acc[0]=0;
   b->acc[1]=0;
   
-  motion_apply_external_acc(b,k);
-  motion_apply_friction(b);
-  motion_apply_gravity(b);
-  motion_integrate_over_time(b,dt);
+  switch(b->ctrl)
+    {
+    case CTRL_ACC:
+      PRINTF("CTRL_ACC active\n");
+      motion_apply_external_acc(b,t);
+      motion_apply_friction(b);
+      motion_apply_gravity(b);
+      motion_integrate_vel_over_time(b,dt,3);
+      motion_integrate_pos_over_time(b,dt,3);
+      break;
+    case CTRL_VEL:
+      PRINTF("CTRL_VEL active\n");
+      motion_apply_friction(b);
+      motion_apply_gravity(b);
+      motion_apply_external_vel(b,t);
+      motion_integrate_vel_over_time(b,dt,2);
+      motion_integrate_pos_over_time(b,dt,3);
+      break;
+    case CTRL_POS:
+      PRINTF("CTRL_POS not supported\n");
+      break;
+    }
+  
   motion_apply_constraints(b,dt);
   motion_apply_characters(b,dt);
   
-  PRINTF("-----%lx-main=%d----\ndt=%d ms\n",(long unsigned int)b,b==&(character_get_main()->body),dt);
+  
   PRINTF("position=%d,%d mm\n",b->pos[0],b->pos[1]);
   PRINTF("velocity=%.6f,%.6f m/s\n",b->vel[0],b->vel[1]);
   PRINTF("acc=%.3f,%.3f m/s^2\n",b->acc[0],b->acc[1]);
+    
 
   b->last_t=t;
 
