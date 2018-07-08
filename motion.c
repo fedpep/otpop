@@ -4,7 +4,7 @@
 #include "level.h"
 #include "character.h"
 
-#define DEBUG
+//#define DEBUG
 
 #ifdef DEBUG
 #include <stdio.h>
@@ -19,31 +19,415 @@
 
 static void motion_apply_external_acc(body_t *b,uint32_t t)
 {
-  uint32_t i;
   
-  if(!IS_ON_A_FLOOR(b->on_constraint))
-    return;
+  /*if(!IS_ON_A_FLOOR(b->on_constraint))
+    return;*/
 
-  for(i=0;i<4;i++)
+  switch(b->state)
     {
-      switch(b->key_pressed & (1<<i))
+    case MOTION_STATE_STAND_L:
+    case MOTION_STATE_STAND_R:
+      b->clock=0;
+
+      if(b->state==MOTION_STATE_STAND_L && ((b->key_pressed & (UP | LEFT))==(UP | LEFT)))
 	{
-	case UP:
-	  b->acc[1]+=EXT_ACCEL_Y;
-	  b->last_k_t=t;
-	  break;
-	case DOWN:
-	  //b->acc[1]-=EXT_ACCEL;
-	  break;
-	case RIGHT:    
-	  b->acc[0]+=EXT_ACCEL_X;
-	  b->last_k_t=t;
-	  break;
-	case LEFT:
-	  b->acc[0]-=EXT_ACCEL_X;
-	  b->last_k_t=t;
-	  break;
+	  b->state=MOTION_STATE_JUMP_FWD_L;
 	}
+      else if(b->state==MOTION_STATE_STAND_R && ((b->key_pressed & (UP | RIGHT))==(UP | RIGHT)))
+	{
+	  b->state=MOTION_STATE_JUMP_FWD_R;
+	}
+      else if(b->key_pressed & SHIFT)
+	{
+	  if(b->key_pressed & LEFT)
+	    {
+	      b->state=MOTION_STATE_STEP_L;
+	    }
+	  else if(b->key_pressed & RIGHT)
+	    {
+	      b->state=MOTION_STATE_STEP_R;
+	    }
+	  b->clock=0;
+	}
+      else if(b->key_pressed & UP)
+	{
+	  if(b->state==MOTION_STATE_STAND_L)
+	    {
+	      b->state=MOTION_STATE_JUMP_L;
+	    }
+	  else
+	    {
+	      b->state=MOTION_STATE_JUMP_R;
+	    }
+	}
+      else if(b->key_pressed & LEFT)
+	{
+	  if(b->state==MOTION_STATE_STAND_L)
+	    {
+	      b->state=MOTION_STATE_RUN_L;
+	    }
+	  else
+	    {
+	      b->state=MOTION_STATE_CHANGE_DIR_R2L;
+	    }
+	}
+      else if(b->key_pressed & RIGHT)
+	{
+	  if(b->state==MOTION_STATE_STAND_R)
+	    {
+	      b->state=MOTION_STATE_RUN_R;
+	    }
+	  else
+	    {
+	      b->state=MOTION_STATE_CHANGE_DIR_L2R;
+	    }
+
+	}
+      else if(b->key_pressed & DOWN)
+	{
+	  if(b->state==MOTION_STATE_STAND_L)
+	    {
+	      if(level_close_to_down_edge(b->pos[0],b->pos[1]))
+		{	  
+		  b->state=MOTION_STATE_CLIMB_DOWN_L;
+		  b->suspend_dynamics=1;
+		  b->pos[0]+=1000;
+		  b->pos[1]-=12000;
+		  printf("%d %d, move state to climbing down\n",b->pos[0],b->pos[1]);
+		}
+	      else
+		{
+		  b->state=MOTION_STATE_CROUCH_L;
+		}
+	    }
+	  else
+	    {
+	      if(level_close_to_down_edge(b->pos[0],b->pos[1]))
+		{	  
+		  b->state=MOTION_STATE_CLIMB_DOWN_R;
+		  b->suspend_dynamics=1;
+		  b->pos[0]-=1000;
+		  b->pos[1]-=12000;
+		  printf("%d %d, move state to climbing down\n",b->pos[0],b->pos[1]);
+		}
+	      else
+		{
+		  b->state=MOTION_STATE_CROUCH_R;
+		}
+	      
+	    }
+	}
+      
+      break;
+
+    case MOTION_STATE_JUMP_L:
+    case MOTION_STATE_JUMP_R:
+      if(b->clock==10)
+	{
+	  //b->acc[1]+=EXT_ACCEL_Y;
+	}
+      else if(b->clock==15)
+	{
+	  if(level_close_to_up_edge(b->pos[0],b->pos[1]))
+	    {
+	      printf("%d %d, move state to climbing up\n",b->pos[0],b->pos[1]);
+	      b->state=(b->state==MOTION_STATE_JUMP_L)?(MOTION_STATE_CLIMB_UP_L):(MOTION_STATE_CLIMB_UP_R);
+	      b->clock=0;
+	      b->suspend_dynamics=1;
+	    }
+	}
+      else if(b->clock==20)
+	{
+	  b->state=(b->state==MOTION_STATE_JUMP_L)?(MOTION_STATE_STAND_L):(MOTION_STATE_STAND_R);
+	}
+      b->clock++;
+      b->last_k_t=t;//boh
+      break;
+    case MOTION_STATE_RUN_L:
+       if(b->key_pressed & RIGHT)
+	{
+	  b->state=MOTION_STATE_INVERT_L2R;
+	  b->clock=0;
+	}
+       else if(b->key_pressed & LEFT)
+	{
+	  b->acc[0]-=EXT_ACCEL_X;
+	  if(b->key_pressed & UP)
+	    {
+	      b->state=MOTION_STATE_RUN_JUMP_L;
+	      b->clock=0;
+	    }
+	}
+      else
+	{
+	  if(b->clock>0)
+	    {
+	      b->state=MOTION_STATE_BRAKE_L;
+	      b->clock=0;
+	    }
+	  else
+	    {
+	      b->state=MOTION_STATE_STAND_L;
+	    }
+	}
+
+      b->clock++;
+      b->last_k_t=t;//boh
+      break;
+    case MOTION_STATE_RUN_R:
+      if(b->key_pressed & LEFT)
+	{
+	  b->state=MOTION_STATE_INVERT_R2L;
+	  b->clock=0;
+	}
+      else if(b->key_pressed & RIGHT)
+	{
+	  b->acc[0]+=EXT_ACCEL_X;
+	  if(b->key_pressed & UP)
+	    {
+	      b->state=MOTION_STATE_RUN_JUMP_R;
+	      b->clock=0;
+	    }
+	}
+      else
+	{
+	  if(b->clock>0)
+	    {
+	      b->state=MOTION_STATE_BRAKE_R;
+	      b->clock=0;
+	    }
+	  else
+	    {
+	      b->state=MOTION_STATE_STAND_R;
+	    }
+	}
+
+      b->clock++;
+      b->last_k_t=t;//boh
+      break;
+    case MOTION_STATE_BRAKE_L:
+    case MOTION_STATE_BRAKE_R:
+      if(b->clock==7)
+	{
+	  if(b->state==MOTION_STATE_BRAKE_L)
+	    {
+	      b->state=MOTION_STATE_STAND_L;
+
+	      /*if(b->key_pressed & RIGHT)
+		{
+		  b->state=MOTION_STATE_INVERT_L2R;
+		}
+		b->clock=0;*/
+	    }
+	  else
+	    {
+	      b->state=MOTION_STATE_STAND_R;
+
+	      /*if(b->key_pressed & LEFT)
+		{
+		  b->state=MOTION_STATE_INVERT_R2L;
+		}
+		b->clock=0;*/
+	    }
+	}
+      b->clock++;      
+      break;
+
+    case MOTION_STATE_INVERT_L2R:
+      if(b->clock==8)
+	{
+	  b->state=MOTION_STATE_RUN_R;
+	  b->clock=3;
+	}
+      b->clock++;
+      break;
+    case MOTION_STATE_INVERT_R2L:
+      if(b->clock==8)
+	{
+	  b->state=MOTION_STATE_RUN_L;
+	  b->clock=3;
+	}
+      b->clock++;
+      break;
+    case MOTION_STATE_CHANGE_DIR_L2R:
+      if(b->clock==7)
+	{
+	  if(b->key_pressed & RIGHT)
+	    {
+	      b->state=MOTION_STATE_RUN_R;
+	      b->clock=0;
+	      b->acc[0]+=EXT_ACCEL_X;
+	    }
+	  else
+	    {
+	      b->state=MOTION_STATE_STAND_R;
+	    }
+	}
+      b->clock++;
+      break;
+    case MOTION_STATE_CHANGE_DIR_R2L:
+      if(b->clock==7)
+	{
+	  if(b->key_pressed & LEFT)
+	    {
+	      b->state=MOTION_STATE_RUN_L;
+	      b->clock=0;
+	      b->acc[0]-=EXT_ACCEL_X;
+	    }
+	  else
+	    {
+	      b->state=MOTION_STATE_STAND_L;
+	    }
+	}
+      b->clock++;
+      break;
+    case MOTION_STATE_CROUCH_L:
+    case MOTION_STATE_CROUCH_R:
+      if(b->key_pressed & DOWN)
+	{
+	  if(b->clock!=4)
+	    {
+	      b->clock++;
+	    }
+	}
+      else
+	{
+	  b->clock++;
+	  if(b->clock==12)
+	    {
+	      b->state=(b->state==MOTION_STATE_CROUCH_L)?MOTION_STATE_STAND_L:MOTION_STATE_STAND_R;
+	    }
+	  
+	}
+      break;
+
+    case MOTION_STATE_RUN_JUMP_L:
+      if(b->clock<8)
+	{
+	  b->acc[0]-=EXT_ACCEL_X;
+	}
+      if(b->clock==5)
+	{
+	  b->acc[1]+=EXT_ACCEL_Y;
+	}
+      else if(b->clock==10)
+	{
+	  b->state=MOTION_STATE_RUN_L;
+	  b->clock=0;
+	}
+      b->clock++;
+      break;
+
+    case MOTION_STATE_RUN_JUMP_R:
+      if(b->clock<8)
+	{
+	  b->acc[0]+=EXT_ACCEL_X;
+	}
+      if(b->clock==5)
+	{
+	  b->acc[1]+=EXT_ACCEL_Y;
+	}
+      else if(b->clock==10)
+	{
+	  b->state=MOTION_STATE_RUN_R;
+	  b->clock=0;
+	}
+      b->clock++;
+      break;
+    case MOTION_STATE_JUMP_FWD_L:
+      if(b->clock>5 && b->clock<8)
+	{
+	  b->acc[0]-=EXT_ACCEL_X;
+	}
+      if(b->clock==7)
+	{
+	  b->acc[1]+=EXT_ACCEL_Y;
+	}
+      else if(b->clock==16)
+	{
+	  b->state=MOTION_STATE_STAND_L;
+	  b->clock=0;
+	}
+      b->clock++;
+      break;
+    case MOTION_STATE_JUMP_FWD_R:
+      if(b->clock>5 && b->clock<8)
+	{
+	  b->acc[0]+=EXT_ACCEL_X;
+	}
+      if(b->clock==7)
+	{
+	  b->acc[1]+=EXT_ACCEL_Y;
+	}
+      else if(b->clock==16)
+	{
+	  b->state=MOTION_STATE_STAND_R;
+	  b->clock=0;
+	}
+      b->clock++;
+      break;
+    case MOTION_STATE_STEP_L:
+      if(b->clock==11)
+	{
+	  b->state=MOTION_STATE_STAND_L;
+	}
+      else if(b->clock==4)
+	{
+	  b->acc[0]-=EXT_ACCEL_X;
+	}
+
+      b->clock++;
+      break;
+    case MOTION_STATE_STEP_R:
+      if(b->clock==11)
+	{
+	  b->state=MOTION_STATE_STAND_R;
+	}
+      else if(b->clock==4)
+	{
+	  b->acc[0]+=EXT_ACCEL_X;
+	}
+
+      b->clock++;
+      break;
+    case MOTION_STATE_CLIMB_UP_L:   
+      if(b->clock==16)
+	{
+	  b->state=MOTION_STATE_STAND_L;
+	  b->pos[0]-=1000;
+	  b->pos[1]+=12000;
+	  
+	  b->suspend_dynamics=0;
+	}
+      b->clock++;
+      break;
+    case MOTION_STATE_CLIMB_UP_R:
+      if(b->clock==16)
+	{
+	  b->state=MOTION_STATE_STAND_R;
+	  b->pos[0]+=1000;
+	  b->pos[1]+=12000;
+	  
+	  b->suspend_dynamics=0;
+	}
+      b->clock++;
+      break;
+    case MOTION_STATE_CLIMB_DOWN_L:   
+      if(b->clock==16)
+	{
+	  b->state=MOTION_STATE_STAND_L;
+	  b->suspend_dynamics=0;
+	}
+      b->clock++;
+      break;
+    case MOTION_STATE_CLIMB_DOWN_R:   
+      if(b->clock==16)
+	{
+	  b->state=MOTION_STATE_STAND_R;
+	  b->suspend_dynamics=0;
+	}
+      b->clock++;
+      break;
     }
 
 }
@@ -68,7 +452,6 @@ static void motion_apply_external_vel(body_t *b, uint32_t t)
 	  if(t-b->last_k_t>400)
 	    {
 	      b->vel[0]=EXT_VEL_X;
-	      printf("k time diff %d\n",t-b->last_k_t);
 	      b->last_k_t=t;
 	    }
 	  break;
@@ -76,7 +459,6 @@ static void motion_apply_external_vel(body_t *b, uint32_t t)
 	  if(t-b->last_k_t>400)
 	    {
 	      b->vel[0]=-EXT_VEL_X; 
-	      printf("k time diff %d\n",t-b->last_k_t);
 	      b->last_k_t=t;
 	    }
 	  break;
@@ -148,7 +530,6 @@ static void motion_apply_constraints(body_t *b, uint32_t dt)
   pos_p[0]=b->pos[0]-b->vel[0]*dt;
   pos_p[1]=b->pos[1]-b->vel[1]*dt;
   
-  //printf("****\ny_prec: %f\n",pos_y_p);
   PRINTF("****\n");
   
   while(constraint)
@@ -281,22 +662,23 @@ void motion_init_body(body_t *b, int32_t *dim, int32_t mass)
   motion_set_pos(b, z);
   motion_set_vel(b, z_dot);
   motion_set_dim(b, dim);
-  
   b->ctrl=CTRL_ACC;
   b->mass=mass;
   b->on_constraint=0;
   b->key_pressed=NONE;
+  b->state=MOTION_STATE_STAND_R;
+  b->suspend_dynamics=0;
   b->last_k_t=0;
   b->last_t=SDL_GetTicks();
 }
 
-uint8_t motion_move_body(body_t* b)
+uint8_t motion_move_body(body_t* b, uint32_t t)
 {
-  uint32_t dt,t=SDL_GetTicks();
+  uint32_t dt;
 
   dt=t-b->last_t;
-  if(dt<DT)
-    return 0;
+  //if(dt<DT)
+  //  return 0;
   
   PRINTF("-----%lx-main=%d----\ndt=%d ms\n",(long unsigned int)b,b==&(character_get_main()->body),dt);
   b->acc[0]=0;
@@ -307,10 +689,13 @@ uint8_t motion_move_body(body_t* b)
     case CTRL_ACC:
       PRINTF("CTRL_ACC active\n");
       motion_apply_external_acc(b,t);
-      motion_apply_friction(b);
-      motion_apply_gravity(b);
-      motion_integrate_vel_over_time(b,dt,3);
-      motion_integrate_pos_over_time(b,dt,3);
+      if(!b->suspend_dynamics)
+	{
+	  motion_apply_friction(b);
+	  motion_apply_gravity(b);
+	  motion_integrate_vel_over_time(b,dt,3);
+	  motion_integrate_pos_over_time(b,dt,3);
+	}
       break;
     case CTRL_VEL:
       PRINTF("CTRL_VEL active\n");
@@ -332,6 +717,7 @@ uint8_t motion_move_body(body_t* b)
   PRINTF("position=%d,%d mm\n",b->pos[0],b->pos[1]);
   PRINTF("velocity=%.6f,%.6f m/s\n",b->vel[0],b->vel[1]);
   PRINTF("acc=%.3f,%.3f m/s^2\n",b->acc[0],b->acc[1]);
+  
     
 
   b->last_t=t;

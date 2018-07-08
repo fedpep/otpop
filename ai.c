@@ -1,8 +1,9 @@
+#include <stdlib.h>
 #include "character.h"
 #include "keyboard.h"
 #include "ai.h"
 
-//#define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
 #include <stdio.h>
@@ -13,41 +14,70 @@
 
 #define ABS(x)  (((x)>=0)?(x):(-(x)))
 
+
+static uint8_t ai_approach_main_character(character_t *c, uint32_t target_dist)
+{
+  character_t *main_character=character_get_main();
+  uint32_t dist=ABS(main_character->body.pos[0]-c->body.pos[0]);
+
+  PRINTF("dist=%d\n",dist);
+
+  if(main_character->body.pos[0]>c->body.pos[0])
+    {
+      if(dist>target_dist)
+	{
+	  c->body.key_pressed=RIGHT;
+	}
+      else if(dist<target_dist-3000)
+	{
+	  c->body.key_pressed=LEFT;
+	}
+    }
+  else
+    {
+      if(dist>target_dist)
+	{
+	  c->body.key_pressed=LEFT;
+	}
+      else if(dist<target_dist-3000)
+	{
+	  c->body.key_pressed=RIGHT;
+	}
+    }
+  
+  return (dist<=target_dist);
+}
+
 void ai_command(character_t *c)
 {
   character_t *main_character;
-  int32_t dist;
+  uint32_t dist_target;
 
+  c->body.key_pressed=NONE;
   main_character=character_get_main();
 
   switch(c->state)
     {
-    case FIGHT:
-      dist=ABS(main_character->body.pos[0]-c->body.pos[0]);
-      //PRINTF("dist=%d\n",dist);
-      if((dist>3000 && main_character->state==FIGHT)
-	 || (dist>0 && (main_character->state==IDLE_R || main_character->state==IDLE)))
+    case IN_GUARD:
+      
+      dist_target=8000;
+      switch(main_character->state)
 	{
-	  if(main_character->body.pos[0]>c->body.pos[0])
+	case IN_GUARD:
+	case ATTACK:
+	case DEFENSE:
+	  if((rand()%100)<5)
 	    {
-	      c->body.key_pressed=RIGHT;
+	      dist_target=4000;
 	    }
-	  if(main_character->body.pos[0]<c->body.pos[0])
-	    {
-	      c->body.key_pressed=LEFT;
-	    }
+	  //printf("dist_tgt %d\n",dist_target);
+	  ai_approach_main_character(c,dist_target);
+	  break;
+	case IDLE:
+	case IDLE_R:
+	  ai_approach_main_character(c,3000);
+	  break;
 	}
-      /*else if(dist<1000 && main_character->state==FIGHT)
-	{
-	  if(main_character->body.pos[0]>c->body.pos[0])
-	    {
-	      c->body.key_pressed=LEFT;
-	    }
-	  if(main_character->body.pos[0]<c->body.pos[0])
-	    {
-	      c->body.key_pressed=RIGHT;
-	    }
-	    }*/
       break;
       
       

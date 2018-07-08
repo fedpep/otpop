@@ -2,43 +2,17 @@
 #define _CHARACTER_H_
 
 #include <stdint.h>
+#include "types.h"
 #include "motion.h"
+#include "graph.h"
 
-
-typedef enum
-{
-  KID=0,
-  SKELETON,
-  GUARD,
-  VIZIR,
-  MOUSE,
-  PRINCESS,
-} character_kind_t;
-
-
-typedef enum
-{
-  IDLE=0,
-  FIGHT,
-  DEAD,
-  IDLE_R,
-} character_state_t;
-
-typedef struct character_struct
-{
-  body_t body; 
-  character_state_t state;
-  character_kind_t kind;
-  uint8_t life;
-  void* figure_ptr;
-  struct character_struct *next;
-} character_t;
+#define IS_FIGHTING(C)  (C->state==IN_GUARD || C->state==ATTACK || C->state==DEFENSE)
 
 
 character_t* character_init(character_kind_t kind);
 character_t* character_init_main(character_kind_t kind);
 character_t *character_get_list(void);
 character_t* character_get_main(void);
-void character_state_check(character_t *c);
+void character_state_check(character_t *c, uint32_t t);
 
 #endif

@@ -33,7 +33,7 @@ keyboard_key_t keyboard_check(void)
 
       if(event.type==SDL_KEYDOWN || event.type==SDL_KEYUP)
 	{
-	  if(event.type==SDL_KEYDOWN && (event.key.keysym.mod & KMOD_CTRL) && (event.key.keysym.sym==SDLK_c))
+	  if(event.type==SDL_KEYDOWN && (event.key.keysym.mod & KMOD_CTRL) && (event.key.keysym.sym==SDLK_c || event.key.keysym.sym==SDLK_q))
 	    {
 	      printf("bye!\n");
 	      SDL_Quit();

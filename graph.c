@@ -2,6 +2,10 @@
 #include "character.h"
 #include "level.h"
 #include "graph.h"
+#include "time.h"
+
+
+#include "clip_prince.h"
 
 #define WIDTH (640)
 #define HEIGHT (480)
@@ -19,12 +23,6 @@
 
 static SDL_Surface *screen=NULL;
 static uint32_t quadrant[2]={0,0};
-
-typedef struct
-{
-  SDL_Surface *fig_surf;
-  SDL_Rect fig_rect;
-} figure_t;
 
 
 
@@ -66,20 +64,28 @@ void graph_init(void)
 void* graph_init_figure(character_kind_t kind)
 {
   figure_t* fig_ptr;
-
+  uint32_t colorkey;
   fig_ptr=(figure_t*) malloc(sizeof(figure_t));
+  fig_ptr->clip_current_index=0;
+  fig_ptr->last_t=0;
+
+
 
   switch(kind)
     {
-    case KID:
-      fig_ptr->fig_surf=SDL_LoadBMP("./blue_rect.bmp");
+    default://case //KID:
+      fig_ptr->fig_surf=SDL_LoadBMP("./clips/clip_prince.bmp");//"./blue_rect.bmp");
+      fig_ptr->clips=(SDL_Rect*)malloc(sizeof(SDL_Rect));
+      clip_prince_init(fig_ptr);
+      fig_ptr->clip_current_index=0;
+      fig_ptr->clip_start_index=0;
       break;
-    case GUARD:
-      fig_ptr->fig_surf=SDL_LoadBMP("./orange_rect.bmp");
+      /*    case GUARD:
+      fig_ptr->fig_surf=SDL_LoadBMP("./low.bmp");//"./orange_rect.bmp");
       break;
     case VIZIR:
-      fig_ptr->fig_surf=SDL_LoadBMP("./red_rect.bmp");
-      break;
+      fig_ptr->fig_surf=SDL_LoadBMP("./low.bmp");//"./red_rect.bmp");
+      break;*/
     }
   if(!fig_ptr->fig_surf)
     {
@@ -88,6 +94,9 @@ void* graph_init_figure(character_kind_t kind)
     }
  
   
+  colorkey=SDL_MapRGB(fig_ptr->fig_surf->format, 255,255,255);
+  SDL_SetColorKey(fig_ptr->fig_surf, SDL_SRCCOLORKEY, colorkey);
+
   return (void*)fig_ptr;
 }
 
@@ -179,37 +188,247 @@ void graph_update_quadrant(int32_t *pos)
   PRINTF("quadrant (%d,%d)\n",quadrant[0],quadrant[1]);
 }
 
+static void graph_set_clip(character_t* character)
+{
+  figure_t *fig=character->figure_ptr;
+  body_t *b=&character->body;
+  uint32_t t=time_get_now();
+
+  fig->last_t=t;
+
+  switch(b->state)
+    {
+    case MOTION_STATE_STAND_L:
+      fig->clip_start_index=CLIP_PRINCE_ROW_0;
+      fig->clip_current_index=fig->clip_start_index;
+      break;
+    case MOTION_STATE_STAND_R:
+      fig->clip_start_index=CLIP_PRINCE_ROW_0_H;
+      fig->clip_current_index=fig->clip_start_index;
+      break;
+    case MOTION_STATE_JUMP_L:
+      if(fig->clip_start_index!=CLIP_PRINCE_ROW_2)
+	{
+	  fig->clip_start_index=CLIP_PRINCE_ROW_2;
+	  fig->clip_current_index=fig->clip_start_index;
+	}      
+      fig->clip_current_index=fig->clip_start_index+b->clock;
+      break;
+    case MOTION_STATE_JUMP_R:
+      if(fig->clip_start_index!=CLIP_PRINCE_ROW_2_H)
+	{
+	  fig->clip_start_index=CLIP_PRINCE_ROW_2_H;
+	  fig->clip_current_index=fig->clip_start_index;
+	}      
+      fig->clip_current_index=fig->clip_start_index+b->clock;
+      break;
+    case MOTION_STATE_RUN_L:
+      if(fig->clip_start_index!=CLIP_PRINCE_ROW_1+8)
+	{
+	  fig->clip_start_index=CLIP_PRINCE_ROW_1+8;
+	  fig->clip_current_index=fig->clip_start_index+b->clock;
+	}
+      fig->clip_current_index++;
+      if(fig->clip_current_index==CLIP_PRINCE_ROW_1+20)
+	fig->clip_current_index=fig->clip_start_index+5;
+
+      break;
+    case MOTION_STATE_RUN_R:
+      if(fig->clip_start_index!=CLIP_PRINCE_ROW_1_H+8)
+	{
+	  fig->clip_start_index=CLIP_PRINCE_ROW_1_H+8;
+	  fig->clip_current_index=fig->clip_start_index+b->clock;
+	}
+      fig->clip_current_index++;
+      if(fig->clip_current_index==CLIP_PRINCE_ROW_1_H+20)
+	fig->clip_current_index=fig->clip_start_index+5;
+
+      break;
+    case MOTION_STATE_BRAKE_L:
+      if(fig->clip_start_index!=CLIP_PRINCE_ROW_1)
+	{
+	  fig->clip_start_index=CLIP_PRINCE_ROW_1;
+	  fig->clip_current_index=fig->clip_start_index;
+	}
+      fig->clip_current_index++;
+      break;
+    case MOTION_STATE_BRAKE_R:
+      if(fig->clip_start_index!=CLIP_PRINCE_ROW_1_H)
+	{
+	  fig->clip_start_index=CLIP_PRINCE_ROW_1_H;
+	  fig->clip_current_index=fig->clip_start_index;
+	}
+      fig->clip_current_index++;
+      
+      break;
+    case MOTION_STATE_INVERT_R2L:
+      if(fig->clip_start_index!=CLIP_PRINCE_ROW_0_H+9)
+	{
+	  fig->clip_start_index=CLIP_PRINCE_ROW_0_H+9;
+	}
+      
+      fig->clip_current_index=fig->clip_start_index+b->clock;
+      break;
+    case MOTION_STATE_INVERT_L2R:
+      if(fig->clip_start_index!=CLIP_PRINCE_ROW_0+9)
+	{
+	  fig->clip_start_index=CLIP_PRINCE_ROW_0+9;
+	}
+      fig->clip_current_index=fig->clip_start_index+b->clock;
+      
+      break;
+    case MOTION_STATE_CHANGE_DIR_L2R:
+      if(fig->clip_start_index!=CLIP_PRINCE_ROW_0+1)
+	{
+	  fig->clip_start_index=CLIP_PRINCE_ROW_0+1;
+	}
+      fig->clip_current_index=fig->clip_start_index+b->clock;
+      break;
+    case MOTION_STATE_CHANGE_DIR_R2L:
+      if(fig->clip_start_index!=CLIP_PRINCE_ROW_0_H+1)
+	{
+	  fig->clip_start_index=CLIP_PRINCE_ROW_0_H+1;
+	}
+      fig->clip_current_index=fig->clip_start_index+b->clock;
+      break;
+
+    case MOTION_STATE_CROUCH_L:
+      fig->clip_start_index=CLIP_PRINCE_ROW_4;
+      fig->clip_current_index=fig->clip_start_index+b->clock;
+      break;
+    case MOTION_STATE_CROUCH_R:
+      fig->clip_start_index=CLIP_PRINCE_ROW_4_H;
+      fig->clip_current_index=fig->clip_start_index+b->clock;
+      break;
+      
+    case MOTION_STATE_RUN_JUMP_L:
+      if(fig->clip_start_index!=CLIP_PRINCE_ROW_6)
+	{
+	  fig->clip_start_index=CLIP_PRINCE_ROW_6;
+	}
+      
+      fig->clip_current_index=fig->clip_start_index+b->clock;
+      break;
+
+    case MOTION_STATE_RUN_JUMP_R:
+      if(fig->clip_start_index!=CLIP_PRINCE_ROW_6_H)
+	{
+	  fig->clip_start_index=CLIP_PRINCE_ROW_6_H;
+	}
+      
+      fig->clip_current_index=fig->clip_start_index+b->clock;
+      break;
+    case MOTION_STATE_JUMP_FWD_L:
+      if(fig->clip_start_index!=CLIP_PRINCE_ROW_5)
+	{
+	  fig->clip_start_index=CLIP_PRINCE_ROW_5;
+	}
+      
+      fig->clip_current_index=fig->clip_start_index+b->clock;
+      break;
+    case MOTION_STATE_JUMP_FWD_R:
+      if(fig->clip_start_index!=CLIP_PRINCE_ROW_5_H)
+	{
+	  fig->clip_start_index=CLIP_PRINCE_ROW_5_H;
+	}
+      
+      fig->clip_current_index=fig->clip_start_index+b->clock;
+      break;
+    case MOTION_STATE_STEP_L:
+      if(fig->clip_start_index!=CLIP_PRINCE_ROW_7)
+	{
+	  fig->clip_start_index=CLIP_PRINCE_ROW_7;
+	}
+      
+      fig->clip_current_index=fig->clip_start_index+b->clock;
+      break;
+    case MOTION_STATE_STEP_R:
+      if(fig->clip_start_index!=CLIP_PRINCE_ROW_7_H)
+	{
+	  fig->clip_start_index=CLIP_PRINCE_ROW_7_H;
+	}
+      
+      fig->clip_current_index=fig->clip_start_index+b->clock;
+      break;
+    case MOTION_STATE_CLIMB_UP_L:
+      if(fig->clip_start_index!=CLIP_PRINCE_ROW_3)
+	{
+	  fig->clip_start_index=CLIP_PRINCE_ROW_3;
+	}
+      
+      fig->clip_current_index=fig->clip_start_index+b->clock;
+      break;
+    case MOTION_STATE_CLIMB_UP_R:
+      if(fig->clip_start_index!=CLIP_PRINCE_ROW_3_H)
+	{
+	  fig->clip_start_index=CLIP_PRINCE_ROW_3_H;
+	}
+      
+      fig->clip_current_index=fig->clip_start_index+b->clock;
+      break;
+    case MOTION_STATE_CLIMB_DOWN_L:
+      if(fig->clip_start_index!=CLIP_PRINCE_ROW_3+16)
+	{
+	  fig->clip_start_index=CLIP_PRINCE_ROW_3+16;
+	}
+      
+      fig->clip_current_index=fig->clip_start_index-b->clock;
+      break;
+    case MOTION_STATE_CLIMB_DOWN_R:
+      if(fig->clip_start_index!=CLIP_PRINCE_ROW_3_H+16)
+	{
+	  fig->clip_start_index=CLIP_PRINCE_ROW_3_H+16;
+	}
+      
+      fig->clip_current_index=fig->clip_start_index-b->clock;
+      break;
+    }
+
+  
+}
 
 
 void graph_update(void)
 {
   constraint_t* constraint;
-  character_t* character=character_get_main();
-  figure_t* fig_ptr = (figure_t*)character->figure_ptr;
+  character_t* character;
+  figure_t* fig_ptr;
+  uint32_t color;
+  SDL_Rect clip;
 
   SDL_FillRect(screen, NULL, 0x221122);
   
-  graph_update_quadrant(character->body.pos);
-
-  graph_calculate_screen_coordinates(character->body.pos[0],character->body.pos[1],&fig_ptr->fig_rect.x,&fig_ptr->fig_rect.y);
-  fig_ptr->fig_rect.x-=fig_ptr->fig_rect.w/2;
-  fig_ptr->fig_rect.y-=fig_ptr->fig_rect.h;
-  SDL_BlitSurface(fig_ptr->fig_surf , NULL , screen , &fig_ptr->fig_rect);
+  graph_update_quadrant(character_get_main()->body.pos);
 
   character=character_get_list();
   while(character)
     {
       if(character_is_in_quadrant(character))
 	{
-	  fig_ptr = (figure_t*)character->figure_ptr;
+	  fig_ptr = character->figure_ptr;
 	  graph_calculate_screen_coordinates(character->body.pos[0],character->body.pos[1],&fig_ptr->fig_rect.x,&fig_ptr->fig_rect.y);
-	  fig_ptr->fig_rect.x-=fig_ptr->fig_rect.w/2;
-	  fig_ptr->fig_rect.y-=fig_ptr->fig_rect.h;
-	  SDL_BlitSurface(fig_ptr->fig_surf , NULL , screen , &fig_ptr->fig_rect);
-	  if(character->state==FIGHT)
+	  /*fig_ptr->fig_rect.x-=fig_ptr->fig_rect.w/2;
+	  fig_ptr->fig_rect.y-=fig_ptr->fig_rect.h;*/
+
+	  graph_set_clip(character);
+
+	  fig_ptr->fig_rect.x-=fig_ptr->clips[fig_ptr->clip_current_index].w/2;
+	  fig_ptr->fig_rect.y-=fig_ptr->clips[fig_ptr->clip_current_index].h;
+
+	  
+	  //printf("chr %x, indx %d\n",(uint32_t)character,fig_ptr->clip_current_index);
+
+	  SDL_BlitSurface(fig_ptr->fig_surf , &fig_ptr->clips[fig_ptr->clip_current_index] , screen , &fig_ptr->fig_rect);
+	  /*
+	  if(IS_FIGHTING(character))
 	    {
-	      SDL_FillRect( screen, &fig_ptr->fig_rect, 0xFF0000);
-	    }
+	      color=0xff0000;
+	      if(character==character_get_main())
+		{
+		  color=0xfff000;
+		}
+	      SDL_FillRect( screen, &fig_ptr->fig_rect, color);
+	      }*/
 	}
       character=character->next;
     }

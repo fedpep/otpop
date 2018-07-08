@@ -67,3 +67,13 @@ constraint_t* level_get_constraint_list(void)
 {
   return current_level.constraint_list;
 }
+
+uint8_t level_close_to_up_edge(int32_t x, int32_t y)
+{
+  return 1;
+}
+
+uint8_t level_close_to_down_edge(int32_t x, int32_t y)
+{
+  return 1;
+}

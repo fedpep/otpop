@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "graph.h"
+//#include "graph.h"
 #include "character.h"
 #include <stdio.h>
 
@@ -67,63 +67,98 @@ character_t *character_get_list(void)
   return characters_list;
 }
 
-static uint8_t character_close_to_each_other(character_t *c1, character_t *c2)
+static uint8_t character_close_to_each_other(character_t *c1, character_t *c2, uint32_t distance)
 {
-  if(ABS(c1->body.pos[1]-c2->body.pos[1])<=c1->body.dim[1]/2 && ABS(c1->body.pos[0]-c2->body.pos[0])<20000)
+  if(ABS(c1->body.pos[1]-c2->body.pos[1])<=c1->body.dim[1]/2 && ABS(c1->body.pos[0]-c2->body.pos[0])<distance)
     return 1;
 
   return 0;
 }
 
-void character_state_check(character_t *c)
+static character_t* character_get_close(character_t *c, uint32_t distance)
 {
-  character_t *char_list;
+  character_t *char_list,*opponent_close=NULL;
   char_list=character_get_list();
   
+  while(char_list)
+    {
+      if(char_list!=c && character_close_to_each_other(char_list,c, distance))
+	{
+	  
+	  return char_list;
+	}
+      
+      char_list=char_list->next;
+    }
+  
+  return NULL;
+
+}
+
+
+void character_state_check(character_t *c, uint32_t t)
+{
+  character_t *opponent_close=NULL;
+
   switch(c->state)
     {
     case IDLE:
       {
+	opponent_close=character_get_close(c, 30000);
+
+	if(opponent_close && opponent_close->life!=0)
+	  {
+	    c->state=IN_GUARD;
+	    c->body.ctrl=CTRL_VEL;
+	    return;
+	  }
+	break;
+	
+	/*
 	while(char_list)
 	  {
 	    if(char_list!=c && character_close_to_each_other(char_list,c))
 	      {
-		c->state=FIGHT;
+		c->state=IN_GUARD;
 		c->body.ctrl=CTRL_VEL;
 		return;
 	      }
 	    
 	    char_list=char_list->next;
-	  }
+	    }*/
       }
       break;
     case IDLE_R:
       {
-	uint8_t someone_close=0;
+	opponent_close=character_get_close(c,20000);
 
-	while(char_list && !someone_close)
+	if((c->body.key_pressed & SHIFT) && opponent_close)
 	  {
-	    if(char_list!=c)
-	      {
-		
-		if(character_close_to_each_other(char_list,c))
-		  {
-		    someone_close=1;
-		  }
-	      }
-	    char_list=char_list->next;
+	    c->state=IN_GUARD;
+	    c->body.ctrl=CTRL_VEL;
+	    return;
 	  }
 	
-	if(!someone_close)
+	if(opponent_close)
+	  {
+	    if(opponent_close->state==ATTACK)
+	      {
+		c->state=HIT;
+		c->body.ctrl=CTRL_VEL;
+		break;
+	      }
+	    
+	  }
+	if(!character_get_close(c,50000))
 	  {
 	    c->state=IDLE;
 	    c->body.ctrl=CTRL_ACC;
 	  }
+	
       }
       break;
-    case FIGHT:
+    case IN_GUARD:
       {
-	uint8_t someone_close=0;
 
 	if(c->body.key_pressed & DOWN)
 	  {
@@ -131,21 +166,20 @@ void character_state_check(character_t *c)
 	    c->body.ctrl=CTRL_ACC;
 	    return;
 	  }
-
-	while(char_list && !someone_close)
+	
+	if(c->body.key_pressed & SHIFT)
 	  {
-	    if(char_list!=c)
-	      {
-		
-		if(character_close_to_each_other(char_list,c))
-		  {
-		    someone_close=1;
-		  }
-	      }
-	    char_list=char_list->next;
+	    c->state=ATTACK;
 	  }
 	
-	if(!someone_close)
+	if(c->body.key_pressed & UP)
+	  {
+	    c->state=DEFENSE;
+	  }
+
+	opponent_close=character_get_close(c,20000);
+	
+	if(!opponent_close)
 	  {
 	    c->state=IDLE;
 	    c->body.ctrl=CTRL_ACC;
@@ -153,6 +187,14 @@ void character_state_check(character_t *c)
       }
       break;
       
+    case ATTACK:
+      if(t-c->body.last_k_t>1000)
+	{
+	  //c->life--;
+	  c->state=IN_GUARD;
+	  c->body.last_k_t=t;
+	}
+      break;
     }
   
 }

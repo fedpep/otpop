@@ -18,4 +18,6 @@ typedef struct constraint_struct
 
 void level_init(uint32_t num);
 constraint_t* level_get_constraint_list(void);
+uint8_t level_close_to_up_edge(int32_t x, int32_t y);
+uint8_t level_close_to_down_edge(int32_t x, int32_t y);
 
