@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "level.h"
 
+#define ABS(x)  (((x)>=0)?(x):(-(x)))
 
 typedef struct
 {
@@ -68,12 +69,77 @@ constraint_t* level_get_constraint_list(void)
   return current_level.constraint_list;
 }
 
-uint8_t level_close_to_up_edge(int32_t x, int32_t y)
+uint8_t level_close_to_up_edge_l(int32_t *p)
 {
-  return 1;
+  constraint_t *c=level_get_constraint_list();
+  while(c)
+    {
+      if(IS_A_FLOOR(c))
+	{
+
+	  if(p[0]>c->p_end[0] && p[0]-c->p_end[0]<2500 && c->p_end[1]>p[1] && c->p_end[1]-p[1]<=12000)
+	    {
+	      //p[0]=c->p_end[0]-1000;
+	      return 1;
+	    }
+	}
+      c=c->next;
+    }
+  
+  return 0;
 }
 
-uint8_t level_close_to_down_edge(int32_t x, int32_t y)
+uint8_t level_close_to_up_edge_r(int32_t *p)
 {
-  return 1;
+  constraint_t *c=level_get_constraint_list();
+  while(c)
+    {
+      if(IS_A_FLOOR(c))
+	{
+	  if(p[0]<c->p_start[0] && c->p_start[0]-p[0]<2500 && c->p_end[1]>p[1] && c->p_end[1]-p[1]<=12000)
+	    {
+	      //p[0]=c->p_start[0]+1000;
+	      return 1;
+	    }
+	}
+      c=c->next;
+    }
+  
+  return 0;
+}
+
+uint8_t level_close_to_down_edge_l(int32_t *p)
+{
+  constraint_t *c=level_get_constraint_list();
+  while(c)
+    {
+      if(IS_A_FLOOR(c))
+	{
+	  if(c->p_end[0]>p[0] && c->p_end[0]-p[0]<2500)
+	    {
+	      //p[0]=c->p_end[0]+1000;
+	      return 1;
+	    }
+	}
+      c=c->next;
+    }
+  return 0;
+}
+
+uint8_t level_close_to_down_edge_r(int32_t *p)
+{
+  constraint_t *c=level_get_constraint_list();
+  while(c)
+    {
+      if(IS_A_FLOOR(c))
+	{
+	  if(p[0]>c->p_start[0] && p[0]-c->p_start[0]<2500)
+	    {
+	      //p[0]=c->p_start[0]-1000;
+	      return 1;
+	    }
+	}
+      c=c->next;
+    }
+  return 0;
 }

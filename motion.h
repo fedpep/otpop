@@ -10,7 +10,7 @@
 #define EXT_VEL_X        (40.0f)
 //#define EXT_VEL_Y        (-G_ACC*4)
 #define B_FRIC_AIR         (0.0025f)
-#define B_FRIC_FLOOR       (0.006f)
+#define B_FRIC_FLOOR       (0.008f)//(0.006f)
 #define K_HOOK             (0.0001f)
 #define DT                 (50)
 

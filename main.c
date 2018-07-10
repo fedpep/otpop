@@ -23,6 +23,7 @@ void main(void)
 {
   character_t *c;
   int32_t p[2];
+  float v[2];
   uint32_t t,t_last=0;
 
   level_init(1);
@@ -30,8 +31,10 @@ void main(void)
   graph_init();
 
   c=character_init_main(KID);  
-  p[0]=10000;p[1]=30000;
+  p[0]=4000;p[1]=40000;
   motion_set_pos(&c->body,p);
+  v[0]=40;v[1]=0;
+  motion_set_vel(&c->body,v);
   /*
   c=character_init(GUARD);
   p[0]=30000;p[1]=20000;

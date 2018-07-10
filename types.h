@@ -44,6 +44,8 @@ typedef enum {
   MOTION_STATE_CROUCH_R,
   MOTION_STATE_STEP_L,
   MOTION_STATE_STEP_R,
+  MOTION_STATE_STEP_DANG_L,
+  MOTION_STATE_STEP_DANG_R,
   MOTION_STATE_CLIMB_UP_L,
   MOTION_STATE_CLIMB_UP_R,
   MOTION_STATE_CLIMB_DOWN_L,
@@ -116,6 +118,12 @@ typedef struct character_struct
   struct character_struct *next;
 } character_t;
 
+typedef struct constraint_struct
+{
+  int32_t p_start[2];
+  int32_t p_end[2];
+  struct constraint_struct *next;
+} constraint_t;
 
 
 

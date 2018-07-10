@@ -382,6 +382,38 @@ static void graph_set_clip(character_t* character)
       
       fig->clip_current_index=fig->clip_start_index-b->clock;
       break;
+    case MOTION_STATE_FALL_L:
+      if(fig->clip_start_index!=CLIP_PRINCE_ROW_8)
+	{
+	  fig->clip_start_index=CLIP_PRINCE_ROW_8;
+	}
+      
+      fig->clip_current_index=fig->clip_start_index+b->clock;
+      break;
+    case MOTION_STATE_FALL_R:
+      if(fig->clip_start_index!=CLIP_PRINCE_ROW_8_H)
+	{
+	  fig->clip_start_index=CLIP_PRINCE_ROW_8_H;
+	}
+      
+      fig->clip_current_index=fig->clip_start_index+b->clock;
+      break;
+    case MOTION_STATE_STEP_DANG_L:
+      if(fig->clip_start_index!=CLIP_PRINCE_ROW_4+15)
+	{
+	  fig->clip_start_index=CLIP_PRINCE_ROW_4+15;
+	}
+      
+      fig->clip_current_index=fig->clip_start_index+b->clock;
+      break;
+    case MOTION_STATE_STEP_DANG_R:
+      if(fig->clip_start_index!=CLIP_PRINCE_ROW_4_H+15)
+	{
+	  fig->clip_start_index=CLIP_PRINCE_ROW_4_H+15;
+	}
+      
+      fig->clip_current_index=fig->clip_start_index+b->clock;
+      break;
     }
 
   

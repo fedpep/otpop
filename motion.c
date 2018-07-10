@@ -20,14 +20,21 @@
 static void motion_apply_external_acc(body_t *b,uint32_t t)
 {
   
-  /*if(!IS_ON_A_FLOOR(b->on_constraint))
-    return;*/
+  
+  printf("on_constraint: %.2x, state %.2x, clock: %d\n",b->on_constraint,b->state,b->clock);
+
 
   switch(b->state)
     {
     case MOTION_STATE_STAND_L:
     case MOTION_STATE_STAND_R:
       b->clock=0;
+      if(!IS_ON_A_FLOOR(b->on_constraint))
+	{
+	  b->state=(b->state==MOTION_STATE_STAND_L)?(MOTION_STATE_FALL_L):(MOTION_STATE_FALL_R);
+	  break;
+	}
+      
 
       if(b->state==MOTION_STATE_STAND_L && ((b->key_pressed & (UP | LEFT))==(UP | LEFT)))
 	{
@@ -87,7 +94,7 @@ static void motion_apply_external_acc(body_t *b,uint32_t t)
 	{
 	  if(b->state==MOTION_STATE_STAND_L)
 	    {
-	      if(level_close_to_down_edge(b->pos[0],b->pos[1]))
+	      if(level_close_to_down_edge_l(b->pos))
 		{	  
 		  b->state=MOTION_STATE_CLIMB_DOWN_L;
 		  b->suspend_dynamics=1;
@@ -102,7 +109,7 @@ static void motion_apply_external_acc(body_t *b,uint32_t t)
 	    }
 	  else
 	    {
-	      if(level_close_to_down_edge(b->pos[0],b->pos[1]))
+	      if(level_close_to_down_edge_r(b->pos))
 		{	  
 		  b->state=MOTION_STATE_CLIMB_DOWN_R;
 		  b->suspend_dynamics=1;
@@ -128,7 +135,7 @@ static void motion_apply_external_acc(body_t *b,uint32_t t)
 	}
       else if(b->clock==15)
 	{
-	  if(level_close_to_up_edge(b->pos[0],b->pos[1]))
+	  if((b->state==MOTION_STATE_JUMP_L && level_close_to_up_edge_l(b->pos)) || (b->state==MOTION_STATE_JUMP_R && level_close_to_up_edge_r(b->pos)))
 	    {
 	      printf("%d %d, move state to climbing up\n",b->pos[0],b->pos[1]);
 	      b->state=(b->state==MOTION_STATE_JUMP_L)?(MOTION_STATE_CLIMB_UP_L):(MOTION_STATE_CLIMB_UP_R);
@@ -144,6 +151,13 @@ static void motion_apply_external_acc(body_t *b,uint32_t t)
       b->last_k_t=t;//boh
       break;
     case MOTION_STATE_RUN_L:
+      if(!IS_ON_A_FLOOR(b->on_constraint))
+	{
+	  b->state=MOTION_STATE_FALL_L;
+	  b->clock=0;
+	  break;
+	}
+
        if(b->key_pressed & RIGHT)
 	{
 	  b->state=MOTION_STATE_INVERT_L2R;
@@ -157,6 +171,11 @@ static void motion_apply_external_acc(body_t *b,uint32_t t)
 	      b->state=MOTION_STATE_RUN_JUMP_L;
 	      b->clock=0;
 	    }
+	}
+       else if(b->key_pressed & DOWN)
+	{
+	  b->state=MOTION_STATE_CROUCH_L;
+	  b->clock=0;
 	}
       else
 	{
@@ -175,6 +194,12 @@ static void motion_apply_external_acc(body_t *b,uint32_t t)
       b->last_k_t=t;//boh
       break;
     case MOTION_STATE_RUN_R:
+      if(!IS_ON_A_FLOOR(b->on_constraint))
+	{
+	  b->state=MOTION_STATE_FALL_R;
+	  b->clock=0;
+	  break;
+	}
       if(b->key_pressed & LEFT)
 	{
 	  b->state=MOTION_STATE_INVERT_R2L;
@@ -188,6 +213,11 @@ static void motion_apply_external_acc(body_t *b,uint32_t t)
 	      b->state=MOTION_STATE_RUN_JUMP_R;
 	      b->clock=0;
 	    }
+	}
+      else if(b->key_pressed & DOWN)
+	{
+	  b->state=MOTION_STATE_CROUCH_R;
+	  b->clock=0;
 	}
       else
 	{
@@ -345,7 +375,16 @@ static void motion_apply_external_acc(body_t *b,uint32_t t)
 	}
       else if(b->clock==16)
 	{
-	  b->state=MOTION_STATE_STAND_L;
+	  if(IS_ON_A_FLOOR(b->on_constraint))
+	    {
+	      if(b->key_pressed & LEFT)
+		b->state=MOTION_STATE_RUN_L;
+	      else
+		b->state=MOTION_STATE_STAND_L;
+	    }
+	  else
+	    b->state=MOTION_STATE_FALL_L;
+
 	  b->clock=0;
 	}
       b->clock++;
@@ -361,7 +400,16 @@ static void motion_apply_external_acc(body_t *b,uint32_t t)
 	}
       else if(b->clock==16)
 	{
-	  b->state=MOTION_STATE_STAND_R;
+	  if(IS_ON_A_FLOOR(b->on_constraint))
+	    {
+	      if(b->key_pressed & RIGHT)
+		b->state=MOTION_STATE_RUN_R;
+	      else
+		b->state=MOTION_STATE_STAND_R;
+	    }
+	  else
+	    b->state=MOTION_STATE_FALL_R;
+
 	  b->clock=0;
 	}
       b->clock++;
@@ -373,7 +421,17 @@ static void motion_apply_external_acc(body_t *b,uint32_t t)
 	}
       else if(b->clock==4)
 	{
-	  b->acc[0]-=EXT_ACCEL_X;
+	  
+	  if(level_close_to_down_edge_r(b->pos))
+	    {
+	      b->state=MOTION_STATE_STEP_DANG_L;
+	      b->clock=0;
+	      break;
+	    }
+	  else
+	    {
+	      b->acc[0]-=EXT_ACCEL_X;
+	    }
 	}
 
       b->clock++;
@@ -385,7 +443,16 @@ static void motion_apply_external_acc(body_t *b,uint32_t t)
 	}
       else if(b->clock==4)
 	{
-	  b->acc[0]+=EXT_ACCEL_X;
+	  if(level_close_to_down_edge_l(b->pos))
+	    {
+	      b->state=MOTION_STATE_STEP_DANG_R;
+	      b->clock=0;
+	      break;
+	    }
+	  else
+	    {
+	      b->acc[0]+=EXT_ACCEL_X;
+	    }
 	}
 
       b->clock++;
@@ -427,6 +494,40 @@ static void motion_apply_external_acc(body_t *b,uint32_t t)
 	  b->suspend_dynamics=0;
 	}
       b->clock++;
+      break;
+    case MOTION_STATE_FALL_L:
+      if(IS_ON_A_FLOOR(b->on_constraint))
+	{
+	  b->state=MOTION_STATE_CROUCH_L;
+	  b->clock=0;
+	  //b->state=MOTION_STATE_STAND_L;
+	}
+      else if(b->clock!=4)
+	{
+	  b->clock++;
+	}
+      break;
+    case MOTION_STATE_FALL_R:
+      if(IS_ON_A_FLOOR(b->on_constraint))
+	{
+	  b->state=MOTION_STATE_CROUCH_R;
+	  b->clock=0;
+	  //b->state=MOTION_STATE_STAND_L;
+	}
+      else if(b->clock!=4)
+	{
+	  b->clock++;
+	}
+      break;
+    case MOTION_STATE_STEP_DANG_L:
+      //if(b->clock==1)
+	b->state=MOTION_STATE_STAND_L;
+      //b->clock++;
+      break;
+    case MOTION_STATE_STEP_DANG_R:
+      //if(b->clock==1)
+	b->state=MOTION_STATE_STAND_R;
+      //b->clock++;
       break;
     }
 
