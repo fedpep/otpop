@@ -188,63 +188,62 @@ void graph_update_quadrant(int32_t *pos)
   PRINTF("quadrant (%d,%d)\n",quadrant[0],quadrant[1]);
 }
 
-static void graph_set_clip(character_t* character)
+static void graph_set_clip(character_t* c)
 {
-  figure_t *fig=character->figure_ptr;
-  body_t *b=&character->body;
+  figure_t *fig=c->figure_ptr;
   uint32_t t=time_get_now();
 
   fig->last_t=t;
 
-  switch(b->state)
+  switch(c->state)
     {
-    case MOTION_STATE_STAND_L:
+    case CHR_STATE_STAND_L:
       fig->clip_start_index=CLIP_PRINCE_ROW_0;
       fig->clip_current_index=fig->clip_start_index;
       break;
-    case MOTION_STATE_STAND_R:
+    case CHR_STATE_STAND_R:
       fig->clip_start_index=CLIP_PRINCE_ROW_0_H;
       fig->clip_current_index=fig->clip_start_index;
       break;
-    case MOTION_STATE_JUMP_L:
+    case CHR_STATE_JUMP_L:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_2)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_2;
 	  fig->clip_current_index=fig->clip_start_index;
 	}      
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_JUMP_R:
+    case CHR_STATE_JUMP_R:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_2_H)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_2_H;
 	  fig->clip_current_index=fig->clip_start_index;
 	}      
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_RUN_L:
+    case CHR_STATE_RUN_L:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_1+8)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_1+8;
-	  fig->clip_current_index=fig->clip_start_index+b->clock;
+	  fig->clip_current_index=fig->clip_start_index+c->clock;
 	}
       fig->clip_current_index++;
       if(fig->clip_current_index==CLIP_PRINCE_ROW_1+20)
 	fig->clip_current_index=fig->clip_start_index+5;
 
       break;
-    case MOTION_STATE_RUN_R:
+    case CHR_STATE_RUN_R:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_1_H+8)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_1_H+8;
-	  fig->clip_current_index=fig->clip_start_index+b->clock;
+	  fig->clip_current_index=fig->clip_start_index+c->clock;
 	}
       fig->clip_current_index++;
       if(fig->clip_current_index==CLIP_PRINCE_ROW_1_H+20)
 	fig->clip_current_index=fig->clip_start_index+5;
 
       break;
-    case MOTION_STATE_BRAKE_L:
+    case CHR_STATE_BRAKE_L:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_1)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_1;
@@ -252,7 +251,7 @@ static void graph_set_clip(character_t* character)
 	}
       fig->clip_current_index++;
       break;
-    case MOTION_STATE_BRAKE_R:
+    case CHR_STATE_BRAKE_R:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_1_H)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_1_H;
@@ -261,321 +260,337 @@ static void graph_set_clip(character_t* character)
       fig->clip_current_index++;
       
       break;
-    case MOTION_STATE_INVERT_R2L:
+    case CHR_STATE_INVERT_R2L:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_0_H+9)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_0_H+9;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_INVERT_L2R:
+    case CHR_STATE_INVERT_L2R:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_0+9)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_0+9;
 	}
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       
       break;
-    case MOTION_STATE_CHANGE_DIR_L2R:
+    case CHR_STATE_CHANGE_DIR_L2R:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_0+1)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_0+1;
 	}
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_CHANGE_DIR_R2L:
+    case CHR_STATE_CHANGE_DIR_R2L:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_0_H+1)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_0_H+1;
 	}
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
 
-    case MOTION_STATE_CROUCH_L:
+    case CHR_STATE_CROUCH_L:
       fig->clip_start_index=CLIP_PRINCE_ROW_4;
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_CROUCH_R:
+    case CHR_STATE_CROUCH_R:
       fig->clip_start_index=CLIP_PRINCE_ROW_4_H;
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
       
-    case MOTION_STATE_RUN_JUMP_L:
+    case CHR_STATE_RUN_JUMP_L:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_6)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_6;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
 
-    case MOTION_STATE_RUN_JUMP_R:
+    case CHR_STATE_RUN_JUMP_R:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_6_H)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_6_H;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_JUMP_FWD_L:
+    case CHR_STATE_JUMP_FWD_L:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_5)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_5;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_JUMP_FWD_R:
+    case CHR_STATE_JUMP_FWD_R:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_5_H)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_5_H;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_STEP_L:
+    case CHR_STATE_STEP_L:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_7)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_7;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_STEP_R:
+    case CHR_STATE_STEP_R:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_7_H)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_7_H;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_CLIMB_UP_L:
+    case CHR_STATE_CLIMB_UP_L:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_3)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_3;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_CLIMB_UP_R:
+    case CHR_STATE_CLIMB_UP_R:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_3_H)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_3_H;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_CLIMB_DOWN_L:
+    case CHR_STATE_CLIMB_DOWN_L:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_3+16)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_3+16;
 	}
       
-      fig->clip_current_index=fig->clip_start_index-b->clock;
+      fig->clip_current_index=fig->clip_start_index-c->clock;
       break;
-    case MOTION_STATE_CLIMB_DOWN_R:
+    case CHR_STATE_CLIMB_DOWN_R:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_3_H+16)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_3_H+16;
 	}
       
-      fig->clip_current_index=fig->clip_start_index-b->clock;
+      fig->clip_current_index=fig->clip_start_index-c->clock;
       break;
-    case MOTION_STATE_FALL_L:
+    case CHR_STATE_FALL_L:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_8)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_8;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_FALL_R:
+    case CHR_STATE_FALL_R:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_8_H)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_8_H;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_STEP_DANG_L:
+    case CHR_STATE_STEP_DANG_L:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_4+15)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_4+15;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_STEP_DANG_R:
+    case CHR_STATE_STEP_DANG_R:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_4_H+15)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_4_H+15;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_HANG_L:
+    case CHR_STATE_HANG_L:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_9+7)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_9+7;
 	}
       
-      fig->clip_current_index=fig->clip_start_index-b->clock;
+      fig->clip_current_index=fig->clip_start_index-c->clock;
       break;
 
-    case MOTION_STATE_HANG_R:
+    case CHR_STATE_HANG_R:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_9_H+7)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_9_H+7;
 	}
       
-      fig->clip_current_index=fig->clip_start_index-b->clock;
+      fig->clip_current_index=fig->clip_start_index-c->clock;
       break;
 
-    case MOTION_STATE_FIGHT_UNSHEATHE_L:
+    case CHR_STATE_FIGHT_UNSHEATHE_L:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_10)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_10;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_FIGHT_UNSHEATHE_R:
+    case CHR_STATE_FIGHT_UNSHEATHE_R:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_10_H)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_10_H;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
       
-    case MOTION_STATE_FIGHT_IN_GUARD_L:
+    case CHR_STATE_FIGHT_IN_GUARD_L:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_10+4)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_10+4;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_FIGHT_IN_GUARD_R:
+    case CHR_STATE_FIGHT_IN_GUARD_R:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_10_H+4)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_10_H+4;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_FIGHT_SHEATHE_L:
+    case CHR_STATE_FIGHT_SHEATHE_L:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_11+5)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_11+5;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_FIGHT_SHEATHE_R:
+    case CHR_STATE_FIGHT_SHEATHE_R:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_11_H+5)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_11_H+5;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_FIGHT_FWD_L:
+    case CHR_STATE_FIGHT_FWD_L:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_10+5)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_10+5;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_FIGHT_FWD_R:
+    case CHR_STATE_FIGHT_FWD_R:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_10_H+5)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_10_H+5;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_FIGHT_BACK_L:
+    case CHR_STATE_FIGHT_BACK_L:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_10+8)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_10+8;
 	}
       
-      fig->clip_current_index=fig->clip_start_index-b->clock;
+      fig->clip_current_index=fig->clip_start_index-c->clock;
       break;
-    case MOTION_STATE_FIGHT_BACK_R:
+    case CHR_STATE_FIGHT_BACK_R:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_10_H+8)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_10_H+8;
 	}
       
-      fig->clip_current_index=fig->clip_start_index-b->clock;
+      fig->clip_current_index=fig->clip_start_index-c->clock;
       break;
-    case MOTION_STATE_FIGHT_ATTACK_L:
+    case CHR_STATE_FIGHT_ATTACK_L:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_13+3)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_13+3;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_FIGHT_ATTACK_R:
+    case CHR_STATE_FIGHT_ATTACK_R:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_13_H+3)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_13_H+3;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_GET_POTION_L:
+    case CHR_STATE_GET_POTION_L:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_14)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_14;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_GET_POTION_R:
+    case CHR_STATE_GET_POTION_R:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_14_H)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_14_H;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_GET_HIT_TO_DEATH_L:
+    case CHR_STATE_GET_HIT_L:
+      if(fig->clip_start_index!=CLIP_PRINCE_ROW_12)
+	{
+	  fig->clip_start_index=CLIP_PRINCE_ROW_12;
+	}
+      
+      fig->clip_current_index=fig->clip_start_index+c->clock;
+      break;
+    case CHR_STATE_GET_HIT_R:
+      if(fig->clip_start_index!=CLIP_PRINCE_ROW_12_H)
+	{
+	  fig->clip_start_index=CLIP_PRINCE_ROW_12_H;
+	}
+      
+      fig->clip_current_index=fig->clip_start_index+c->clock;
+      break;
+    case CHR_STATE_GET_HIT_TO_DEATH_L:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_12+3)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_12+3;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_GET_HIT_TO_DEATH_R:
+    case CHR_STATE_GET_HIT_TO_DEATH_R:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_12_H+3)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_12_H+3;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_DEAD_L:
+    case CHR_STATE_DEAD_L:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_12+8)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_12+8;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
-    case MOTION_STATE_DEAD_R:
+    case CHR_STATE_DEAD_R:
       if(fig->clip_start_index!=CLIP_PRINCE_ROW_12_H+8)
 	{
 	  fig->clip_start_index=CLIP_PRINCE_ROW_12_H+8;
 	}
       
-      fig->clip_current_index=fig->clip_start_index+b->clock;
+      fig->clip_current_index=fig->clip_start_index+c->clock;
       break;
     }
   
@@ -611,20 +626,9 @@ void graph_update(void)
 	  fig_ptr->fig_rect.x-=(fig_ptr->clips[fig_ptr->clip_current_index].w/2);//*100/SCALE;
 	  fig_ptr->fig_rect.y-=(fig_ptr->clips[fig_ptr->clip_current_index].h);//*100/SCALE;
 
-	  
-	  //printf("chr %x, indx %d\n",(uint32_t)character,fig_ptr->clip_current_index);
 
 	  SDL_BlitSurface(fig_ptr->fig_surf , &fig_ptr->clips[fig_ptr->clip_current_index] , screen , &fig_ptr->fig_rect);
-	  /*
-	  if(IS_FIGHTING(character))
-	    {
-	      color=0xff0000;
-	      if(character==character_get_main())
-		{
-		  color=0xfff000;
-		}
-	      SDL_FillRect( screen, &fig_ptr->fig_rect, color);
-	      }*/
+	
 	}
       character=character->next;
     }

@@ -26,22 +26,22 @@ static uint8_t ai_approach_main_character(character_t *c, uint32_t target_dist)
     {
       if(dist>target_dist)
 	{
-	  c->body.key_pressed=RIGHT;
+	  c->key_pressed=RIGHT;
 	}
       else if(dist<target_dist-3000)
 	{
-	  c->body.key_pressed=LEFT;
+	  c->key_pressed=LEFT;
 	}
     }
   else
     {
       if(dist>target_dist)
 	{
-	  c->body.key_pressed=LEFT;
+	  c->key_pressed=LEFT;
 	}
       else if(dist<target_dist-3000)
 	{
-	  c->body.key_pressed=RIGHT;
+	  c->key_pressed=RIGHT;
 	}
     }
   
@@ -53,35 +53,35 @@ void ai_command(character_t *c)
   character_t *main_character;
   uint32_t dist_target;
 
-  c->body.key_pressed=NONE;
+  c->key_pressed=NONE;
   main_character=character_get_main();
 
-  switch(c->body.state)
+  switch(c->state)
     {
-    case MOTION_STATE_STAND_L:
+    case CHR_STATE_STAND_L:
       if(motion_body_close_l(&c->body, &main_character->body, 20000))
 	{
-	  c->body.key_pressed|=CTRL;
+	  c->key_pressed|=CTRL;
 	}
       break;
 
-    case MOTION_STATE_STAND_R:
+    case CHR_STATE_STAND_R:
       if(motion_body_close_r(&c->body, &main_character->body, 20000))
 	{
-	  c->body.key_pressed|=CTRL;
+	  c->key_pressed|=CTRL;
 	}
       break;
       
-    case MOTION_STATE_FIGHT_IN_GUARD_L:
+    case CHR_STATE_FIGHT_IN_GUARD_L:
       if(!motion_body_close_l(&c->body, &main_character->body, 20000))
 	{
-	  c->body.key_pressed|=DOWN;
+	  c->key_pressed|=DOWN;
 	}
       break;
-    case MOTION_STATE_FIGHT_IN_GUARD_R:
+    case CHR_STATE_FIGHT_IN_GUARD_R:
       if(!motion_body_close_r(&c->body, &main_character->body, 20000))
 	{
-	  c->body.key_pressed|=DOWN;
+	  c->key_pressed|=DOWN;
 	}
       break;
     }

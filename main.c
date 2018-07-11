@@ -63,7 +63,7 @@ void main(void)
 	  
 	  if(c==character_get_main())
 	    {
-	      c->body.key_pressed=keyboard_check();
+	      c->key_pressed=keyboard_check();
 	    }
 	  else
 	    {
@@ -71,7 +71,7 @@ void main(void)
 	    }
 	  
 	  //character_state_check(c, t);
-
+	  character_state_tick(c);
 	  motion_move_body(&c->body, t);
 
 	  PRINTF("-------%lx-main=%d-----\n",(long unsigned int) c,c==character_get_main());
