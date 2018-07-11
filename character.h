@@ -13,6 +13,6 @@ character_t* character_init(character_kind_t kind);
 character_t* character_init_main(character_kind_t kind);
 character_t *character_get_list(void);
 character_t* character_get_main(void);
-void character_state_check(character_t *c, uint32_t t);
+//void character_state_check(character_t *c, uint32_t t);
 
 #endif

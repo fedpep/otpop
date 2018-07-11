@@ -56,6 +56,36 @@ void ai_command(character_t *c)
   c->body.key_pressed=NONE;
   main_character=character_get_main();
 
+  switch(c->body.state)
+    {
+    case MOTION_STATE_STAND_L:
+      if(motion_body_close_l(&c->body, &main_character->body, 20000))
+	{
+	  c->body.key_pressed|=CTRL;
+	}
+      break;
+
+    case MOTION_STATE_STAND_R:
+      if(motion_body_close_r(&c->body, &main_character->body, 20000))
+	{
+	  c->body.key_pressed|=CTRL;
+	}
+      break;
+      
+    case MOTION_STATE_FIGHT_IN_GUARD_L:
+      if(!motion_body_close_l(&c->body, &main_character->body, 20000))
+	{
+	  c->body.key_pressed|=DOWN;
+	}
+      break;
+    case MOTION_STATE_FIGHT_IN_GUARD_R:
+      if(!motion_body_close_r(&c->body, &main_character->body, 20000))
+	{
+	  c->body.key_pressed|=DOWN;
+	}
+      break;
+    }
+  /*
   switch(c->state)
     {
     case IN_GUARD:
@@ -78,11 +108,9 @@ void ai_command(character_t *c)
 	  ai_approach_main_character(c,3000);
 	  break;
 	}
-      break;
-      
-      
+      break;      
     }
-  
+  */
 }
 
 

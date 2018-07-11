@@ -1,7 +1,5 @@
 #include "types.h"
 
-#define ON_A_FLOOR 0x01
-#define ON_A_WALL  0x02
 
 #define IS_ON_A_WALL(OC)   (OC & ON_A_WALL)
 #define IS_ON_A_FLOOR(OC)  (OC & ON_A_FLOOR)

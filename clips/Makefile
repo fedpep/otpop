@@ -1,4 +1,4 @@
-all: clip_prince
+all: clip_prince clip_guard
 	cp *.c ..
 	cp *.h ..
 
@@ -7,4 +7,4 @@ all: clip_prince
 	python generate_clips.py $@_complete $@
 
 clean:
-	rm -rf *.c *.h
+	rm -rf *.c *.h clip_prince.bmp clip_guard.bmp

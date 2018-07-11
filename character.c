@@ -17,7 +17,7 @@ static character_t* character_init_internal(character_kind_t kind)
   c=(character_t*) malloc(sizeof(character_t));
   
   c->kind=kind;
-  c->life=100;
+  c->life=3;
   c->state=IDLE;
 
   switch(c->kind)
@@ -67,14 +67,17 @@ character_t *character_get_list(void)
   return characters_list;
 }
 
+
+/*
 static uint8_t character_close_to_each_other(character_t *c1, character_t *c2, uint32_t distance)
 {
   if(ABS(c1->body.pos[1]-c2->body.pos[1])<=c1->body.dim[1]/2 && ABS(c1->body.pos[0]-c2->body.pos[0])<distance)
     return 1;
 
   return 0;
-}
+  }*/
 
+/*
 static character_t* character_get_close(character_t *c, uint32_t distance)
 {
   character_t *char_list,*opponent_close=NULL;
@@ -93,9 +96,10 @@ static character_t* character_get_close(character_t *c, uint32_t distance)
   
   return NULL;
 
-}
+  }*/
 
 
+/*
 void character_state_check(character_t *c, uint32_t t)
 {
   character_t *opponent_close=NULL;
@@ -114,18 +118,7 @@ void character_state_check(character_t *c, uint32_t t)
 	  }
 	break;
 	
-	/*
-	while(char_list)
-	  {
-	    if(char_list!=c && character_close_to_each_other(char_list,c))
-	      {
-		c->state=IN_GUARD;
-		c->body.ctrl=CTRL_VEL;
-		return;
-	      }
-	    
-	    char_list=char_list->next;
-	    }*/
+	
       }
       break;
     case IDLE_R:
@@ -199,3 +192,4 @@ void character_state_check(character_t *c, uint32_t t)
   
 }
 
+*/

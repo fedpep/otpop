@@ -6,7 +6,7 @@ CP = cp
 CFLAGS=-I/usr/include/SDL
 LDFLAGS=-lSDL -lpthread
 H_FILES=keyboard.h graph.h character.h motion.h level.h ai.h time.h types.h
-OBJ=keyboard.o main.o character.o motion.o level.o ai.o time.o clip_prince.o graph.o
+OBJ=keyboard.o main.o character.o motion.o level.o ai.o time.o clip_prince.o clip_guard.o graph.o
 BIN=fgame
 
 all: $(BIN)

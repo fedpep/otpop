@@ -35,11 +35,13 @@ void main(void)
   motion_set_pos(&c->body,p);
   v[0]=40;v[1]=0;
   motion_set_vel(&c->body,v);
-  /*
+  
+  
   c=character_init(GUARD);
   p[0]=30000;p[1]=20000;
   motion_set_pos(&c->body,p);
   
+  /*
   c=character_init(GUARD);
   p[0]=80000;p[1]=20000;
   motion_set_pos(&c->body,p);
@@ -48,7 +50,11 @@ void main(void)
   while(1)
     {
       t=time_get_now();
-      if(t-t_last<60) continue;
+      if(t-t_last<60) 
+	{
+	  time_delay(10);
+	  continue;
+	}
       t_last=t;
 
       c=character_get_list();
@@ -57,8 +63,6 @@ void main(void)
 	  
 	  if(c==character_get_main())
 	    {
-	      /* there should be a better way, I want to detect at least 2 simoultaneous press */
-	      c->body.key_pressed=keyboard_check();
 	      c->body.key_pressed=keyboard_check();
 	    }
 	  else
@@ -66,7 +70,7 @@ void main(void)
 	      ai_command(c);
 	    }
 	  
-	  character_state_check(c, t);
+	  //character_state_check(c, t);
 
 	  motion_move_body(&c->body, t);
 

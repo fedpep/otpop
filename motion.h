@@ -22,5 +22,7 @@ void motion_set_vel(body_t *b, float *vel);
 void motion_set_dim(body_t *b, int32_t *dim);
 void motion_init_body(body_t *b, int32_t *dim, int32_t mass);
 uint8_t motion_move_body(body_t* b, uint32_t t);
+uint8_t motion_body_close_l(body_t *b1, body_t *b2, uint32_t distance);
+uint8_t motion_body_close_r(body_t *b1, body_t *b2, uint32_t distance);
 
 #endif

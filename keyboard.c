@@ -19,7 +19,10 @@ static keymaps_t keym[]={{SDLK_DOWN, DOWN},
 			 {SDLK_LEFT, LEFT},
 			 {SDLK_RIGHT, RIGHT},
 			 {SDLK_LSHIFT,SHIFT},
-			 {SDLK_RSHIFT,SHIFT}
+			 {SDLK_RSHIFT,SHIFT},
+			 {SDLK_RCTRL,CTRL},
+			 {SDLK_LCTRL,CTRL},
+			 {SDLK_p,P_BUTTON},
 };
 
 keyboard_key_t keyboard_check(void)
@@ -27,7 +30,7 @@ keyboard_key_t keyboard_check(void)
   SDL_Event event;
   int i;
 
-  if(SDL_PollEvent(&event))
+  while(SDL_PollEvent(&event))
     {
       //printf("%d\n",KEYM_SIZE);
 

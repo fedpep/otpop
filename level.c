@@ -79,7 +79,7 @@ uint8_t level_close_to_up_edge_l(int32_t *p)
 
 	  if(p[0]>c->p_end[0] && p[0]-c->p_end[0]<2500 && c->p_end[1]>p[1] && c->p_end[1]-p[1]<=12000)
 	    {
-	      //p[0]=c->p_end[0]-1000;
+	      p[0]=c->p_end[0];
 	      return 1;
 	    }
 	}
@@ -98,7 +98,7 @@ uint8_t level_close_to_up_edge_r(int32_t *p)
 	{
 	  if(p[0]<c->p_start[0] && c->p_start[0]-p[0]<2500 && c->p_end[1]>p[1] && c->p_end[1]-p[1]<=12000)
 	    {
-	      //p[0]=c->p_start[0]+1000;
+	      p[0]=c->p_start[0];
 	      return 1;
 	    }
 	}
@@ -117,7 +117,7 @@ uint8_t level_close_to_down_edge_l(int32_t *p)
 	{
 	  if(c->p_end[0]>p[0] && c->p_end[0]-p[0]<2500)
 	    {
-	      //p[0]=c->p_end[0]+1000;
+	      p[0]=c->p_end[0]+1000;
 	      return 1;
 	    }
 	}
@@ -135,7 +135,7 @@ uint8_t level_close_to_down_edge_r(int32_t *p)
 	{
 	  if(p[0]>c->p_start[0] && p[0]-c->p_start[0]<2500)
 	    {
-	      //p[0]=c->p_start[0]-1000;
+	      p[0]=c->p_start[0]-1000;
 	      return 1;
 	    }
 	}

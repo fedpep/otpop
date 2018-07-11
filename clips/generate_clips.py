@@ -48,7 +48,7 @@ def set_state(new_state):
 c_y=0
 c_h=0
 clips=[]
-for k in range(9):
+for k in range(15):
     #print "===================%d================="%k
     x=0
     reset_y=c_y+c_h

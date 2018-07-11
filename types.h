@@ -10,18 +10,19 @@
 #define LEFT  0x08
 
 #define SHIFT  0x10
+#define CTRL  0x20
+#define P_BUTTON  0x40
+
+
+#define ON_A_FLOOR 0x01
+#define ON_A_WALL  0x02
+#define GOT_A_HIT    0x10
+
+#define IS_HIT(BP) ((BP)->event & GOT_A_HIT)
+#define SET_HIT(BP) ((BP)->event |= GOT_A_HIT)
+#define CLEAR_HIT(BP) ((BP)->event &= ~GOT_A_HIT)
 
 typedef uint32_t keyboard_key_t;
-
-
-typedef enum
-{
-  CTRL_ACC=0,
-  CTRL_VEL,
-  CTRL_POS,
-} control_t;
-
-
 
 typedef enum {
   MOTION_STATE_STAND_L,
@@ -52,23 +53,42 @@ typedef enum {
   MOTION_STATE_CLIMB_DOWN_R,
   MOTION_STATE_FALL_L,
   MOTION_STATE_FALL_R,
+  MOTION_STATE_HANG_L,
+  MOTION_STATE_HANG_R,
+  MOTION_STATE_FIGHT_IN_GUARD_L,
+  MOTION_STATE_FIGHT_IN_GUARD_R,
+  MOTION_STATE_FIGHT_UNSHEATHE_L,
+  MOTION_STATE_FIGHT_UNSHEATHE_R,
+  MOTION_STATE_FIGHT_SHEATHE_L,
+  MOTION_STATE_FIGHT_SHEATHE_R,
+  MOTION_STATE_FIGHT_FWD_L,
+  MOTION_STATE_FIGHT_FWD_R,
+  MOTION_STATE_FIGHT_BACK_L,
+  MOTION_STATE_FIGHT_BACK_R,
+  MOTION_STATE_FIGHT_ATTACK_L,
+  MOTION_STATE_FIGHT_ATTACK_R,
+  MOTION_STATE_GET_POTION_L,
+  MOTION_STATE_GET_POTION_R,
+  MOTION_STATE_GET_HIT_TO_DEATH_L,
+  MOTION_STATE_GET_HIT_TO_DEATH_R,
+  MOTION_STATE_DEAD_L,
+  MOTION_STATE_DEAD_R,
+
 } body_state_t;
 
 typedef struct
 {
-  control_t ctrl;
   int32_t pos[2];
   float vel[2];
   float acc[2];
   int32_t dim[2];
   int32_t mass;
-  uint8_t on_constraint;
+  uint8_t event;
   body_state_t state;
   uint16_t clock;
   uint8_t suspend_dynamics;
   uint32_t last_t;
   keyboard_key_t key_pressed;
-  uint32_t last_k_t;
 } body_t;
 
 typedef enum
