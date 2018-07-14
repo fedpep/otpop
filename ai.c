@@ -20,7 +20,7 @@ static uint8_t ai_approach_main_character(character_t *c, uint32_t target_dist)
   character_t *main_character=character_get_main();
   uint32_t dist=ABS(main_character->body.pos[0]-c->body.pos[0]);
 
-  PRINTF("dist=%d\n",dist);
+  PRINTF("chr %llx: dist=%d\n",c, dist);
 
   if(main_character->body.pos[0]>c->body.pos[0])
     {
@@ -28,10 +28,10 @@ static uint8_t ai_approach_main_character(character_t *c, uint32_t target_dist)
 	{
 	  c->key_pressed=RIGHT;
 	}
-      else if(dist<target_dist-3000)
+      /*else if(0&&dist<target_dist-6000)
 	{
 	  c->key_pressed=LEFT;
-	}
+	  }*/
     }
   else
     {
@@ -39,10 +39,10 @@ static uint8_t ai_approach_main_character(character_t *c, uint32_t target_dist)
 	{
 	  c->key_pressed=LEFT;
 	}
-      else if(dist<target_dist-3000)
+      /*else if(dist<target_dist-6000)
 	{
 	  c->key_pressed=RIGHT;
-	}
+	  }*/
     }
   
   return (dist<=target_dist);
@@ -52,36 +52,42 @@ void ai_command(character_t *c)
 {
   character_t *main_character;
   uint32_t dist_target;
-
+  uint8_t (*motion_body_close)(body_t *b1, body_t *b2, uint32_t distance);
   c->key_pressed=NONE;
   main_character=character_get_main();
 
   switch(c->state)
     {
     case CHR_STATE_STAND_L:
-      if(motion_body_close_l(&c->body, &main_character->body, 20000))
-	{
-	  c->key_pressed|=CTRL;
-	}
-      break;
-
     case CHR_STATE_STAND_R:
-      if(motion_body_close_r(&c->body, &main_character->body, 20000))
+      motion_body_close=(c->state==CHR_STATE_STAND_L)?(motion_body_close_l):(motion_body_close_r);
+      if(motion_body_close(&c->body, &main_character->body, 20000))
 	{
 	  c->key_pressed|=CTRL;
 	}
       break;
       
     case CHR_STATE_FIGHT_IN_GUARD_L:
-      if(!motion_body_close_l(&c->body, &main_character->body, 20000))
+    case CHR_STATE_FIGHT_IN_GUARD_R:
+      motion_body_close=(c->state==CHR_STATE_FIGHT_IN_GUARD_L)?(motion_body_close_l):(motion_body_close_r);
+      if(!motion_body_close(&c->body, &main_character->body, 20000))
 	{
 	  c->key_pressed|=DOWN;
 	}
-      break;
-    case CHR_STATE_FIGHT_IN_GUARD_R:
-      if(!motion_body_close_r(&c->body, &main_character->body, 20000))
+      else
 	{
-	  c->key_pressed|=DOWN;
+	  ai_approach_main_character(c,15000);
+	}
+
+      if(motion_body_close(&c->body, &main_character->body, 7000))
+	{
+	  if(rand()%100<80)
+	    c->key_pressed|=CTRL;
+	}
+      else
+	{
+	  if(rand()%100<20)
+	    c->key_pressed|=(c->state==CHR_STATE_FIGHT_IN_GUARD_L)?(LEFT):(RIGHT);
 	}
       break;
     }

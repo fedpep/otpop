@@ -31,16 +31,21 @@ void main(void)
   graph_init();
 
   c=character_init_main(KID);  
-  p[0]=4000;p[1]=40000;
-  motion_set_pos(&c->body,p);
-  v[0]=40;v[1]=0;
-  motion_set_vel(&c->body,v);
-  
+  p[0]=0;p[1]=40000;
+  v[0]=30;v[1]=0;
+  character_set_initial_state(c, p, v, DIR_RIGHT);
   
   c=character_init(GUARD);
-  p[0]=30000;p[1]=20000;
-  motion_set_pos(&c->body,p);
+  p[0]=36000;p[1]=20000;
+  v[0]=0;v[1]=0;
+  character_set_initial_state(c, p, v, DIR_RIGHT);
+
+  c=character_init(GUARD);
+  p[0]=15000;p[1]=70000;
+  v[0]=0;v[1]=0;
+  character_set_initial_state(c, p, v, DIR_LEFT);
   
+
   /*
   c=character_init(GUARD);
   p[0]=80000;p[1]=20000;
@@ -52,7 +57,7 @@ void main(void)
       t=time_get_now();
       if(t-t_last<60) 
 	{
-	  time_delay(10);
+	  time_delay(20);
 	  continue;
 	}
       t_last=t;
@@ -70,7 +75,7 @@ void main(void)
 	      ai_command(c);
 	    }
 	  
-	  //character_state_check(c, t);
+
 	  character_state_tick(c);
 	  motion_move_body(&c->body, t);
 

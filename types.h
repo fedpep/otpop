@@ -25,6 +25,11 @@
 typedef uint32_t keyboard_key_t;
 
 typedef enum {
+    DIR_LEFT,
+    DIR_RIGHT
+} direction_t;
+
+typedef enum {
   CHR_STATE_STAND_L,
   CHR_STATE_STAND_R,
   CHR_STATE_RUN_L,
@@ -75,7 +80,7 @@ typedef enum {
   CHR_STATE_GET_HIT_TO_DEATH_R,
   CHR_STATE_DEAD_L,
   CHR_STATE_DEAD_R,
-
+  CHR_SIZE_STATES,
 } chr_state_t;
 
 typedef struct
@@ -105,11 +110,11 @@ typedef struct
 {
   SDL_Surface *fig_surf;
   SDL_Rect fig_rect;
-  uint32_t last_t;
   SDL_Rect *clips;
   uint32_t clips_size;
   uint32_t clip_start_index;
   uint32_t clip_current_index;
+  void (*get_clip_indexes)(chr_state_t s, int **ind);
 } figure_t;
 
 

@@ -3,8 +3,8 @@ all: clip_prince clip_guard
 	cp *.h ..
 
 
-%: %_complete.bmp
+%: %_complete.bmp clip_indexes.py
 	python generate_clips.py $@_complete $@
 
 clean:
-	rm -rf *.c *.h clip_prince.bmp clip_guard.bmp
+	rm -rf *.c *.h *.pyc clip_prince.bmp clip_guard.bmp
