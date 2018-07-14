@@ -212,15 +212,22 @@ content+="""
 static int state_clips[][4]={
 """
 
-for i in range(len(states_list)):
-    while 1:
-        try:
-            ci=CLIPS_INDEXES[states_list[i]]
-            content+="         {%s+%d,%d,%d,%d},\n"%(ci[0],ci[1],ci[2],ci[3],ci[4])
-            break
-        except KeyError:
-            CLIPS_INDEXES[states_list[i]]=CLIPS_INDEXES[states_list[i-1]]
-            CLIPS_INDEXES[states_list[i]][0]+='_H'
+
+for i in range(len(states_list)):    
+    try:
+        ci=CLIPS_INDEXES[states_list[i]]
+        content+="         {%s+%d,%d,%d,%d},\n"%(ci[0],ci[1],ci[2],ci[3],ci[4])
+        
+    except KeyError:
+        print "key error!"
+
+for i in range(len(states_list)):    
+    try:
+        ci=CLIPS_INDEXES[states_list[i]]
+        content+="         {%s_H+%d,%d,%d,%d},\n"%(ci[0],ci[1],ci[2],ci[3],ci[4])
+
+    except KeyError:
+        print "key error!"
 
 content+="""
 };
@@ -235,12 +242,17 @@ void %s_init(figure_t *f)
 """%(file_name,'clips',file_name.upper(),file_name)
 
 content+="""
-void %s_get_index(chr_state_t s, int **ind)
+void %s_get_index(chr_state_t s, uint8_t direction, int **ind)
 {
-    return (*ind)=state_clips[s];
+    uint8_t i=s;
+    
+    if(direction)
+       i+=%d;
+
+    (*ind)=state_clips[i];
 }
 
-"""%file_name
+"""%(file_name,len(states_list))
 
 f=open("%s.c"%file_name,"w")
 f.write(content)
@@ -252,7 +264,8 @@ content+='#include "types.h"\n'
 
 content+="""
 void %s_init(figure_t *f);
-void %s_get_index(chr_state_t s, int **ind);
+void %s_get_index(chr_state_t s, uint8_t direction, int **ind);
+
 """%(file_name,file_name)
 
 f=open("%s.h"%file_name,"w")

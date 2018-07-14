@@ -51,7 +51,7 @@ static void motion_apply_friction(body_t *b)
 {
   float b_fric=B_FRIC_AIR;
   
-  if(IS_ON_A_FLOOR(b->event))
+  if(IS_ON_A_FLOOR(b->flags))
     b_fric=B_FRIC_FLOOR;
 
   b->acc[0]+=-b_fric*b->vel[0]/b->mass;
@@ -84,7 +84,7 @@ static void motion_apply_constraints(body_t *b, uint32_t dt)
   float pos_p[2];
   constraint_t* constraint;
   
-  b->event &= ~(ON_A_WALL | ON_A_FLOOR);
+  b->flags &= ~(ON_A_WALL | ON_A_FLOOR);
 
   constraint=level_get_constraint_list();
 
@@ -116,7 +116,7 @@ static void motion_apply_constraints(body_t *b, uint32_t dt)
 	      b->vel[1]=0;
 #endif
 	      b->acc[1]=0;
-	      b->event|=ON_A_FLOOR;
+	      b->flags|=ON_A_FLOOR;
 	    }
 	
 	}
@@ -141,7 +141,7 @@ static void motion_apply_constraints(body_t *b, uint32_t dt)
 	      b->vel[0]=0;
 #endif
 	      b->acc[0]=0;
-	      b->event|=ON_A_WALL;
+	      b->flags|=ON_A_WALL;
 	    }
 	}
 
@@ -227,7 +227,7 @@ void motion_init_body(body_t *b, int32_t *dim, int32_t mass)
   motion_set_vel(b, z_dot);
   motion_set_dim(b, dim);
   b->mass=mass;
-  b->event=0;
+  b->flags=0;
   b->suspend_dynamics=0;
   b->last_t=SDL_GetTicks();
 }

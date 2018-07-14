@@ -58,18 +58,16 @@ void ai_command(character_t *c)
 
   switch(c->state)
     {
-    case CHR_STATE_STAND_L:
-    case CHR_STATE_STAND_R:
-      motion_body_close=(c->state==CHR_STATE_STAND_L)?(motion_body_close_l):(motion_body_close_r);
+    case CHR_STATE_STAND:
+      motion_body_close=(DIRECTION_IS_LEFT(&c->body))?(motion_body_close_l):(motion_body_close_r);
       if(motion_body_close(&c->body, &main_character->body, 20000))
 	{
 	  c->key_pressed|=CTRL;
 	}
       break;
       
-    case CHR_STATE_FIGHT_IN_GUARD_L:
-    case CHR_STATE_FIGHT_IN_GUARD_R:
-      motion_body_close=(c->state==CHR_STATE_FIGHT_IN_GUARD_L)?(motion_body_close_l):(motion_body_close_r);
+    case CHR_STATE_FIGHT_IN_GUARD:
+      motion_body_close=(DIRECTION_IS_LEFT(&c->body))?(motion_body_close_l):(motion_body_close_r);
       if(!motion_body_close(&c->body, &main_character->body, 20000))
 	{
 	  c->key_pressed|=DOWN;
@@ -81,13 +79,13 @@ void ai_command(character_t *c)
 
       if(motion_body_close(&c->body, &main_character->body, 7000))
 	{
-	  if(rand()%100<80)
+	  if(rand()%100<40)
 	    c->key_pressed|=CTRL;
 	}
       else
 	{
 	  if(rand()%100<20)
-	    c->key_pressed|=(c->state==CHR_STATE_FIGHT_IN_GUARD_L)?(LEFT):(RIGHT);
+	    c->key_pressed|=(DIRECTION_IS_LEFT(&c->body))?(LEFT):(RIGHT);
 	}
       break;
     }

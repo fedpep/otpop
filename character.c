@@ -66,7 +66,8 @@ static character_t* character_init_internal(character_kind_t kind)
   c->kind=kind;
   c->life=3;
   c->key_pressed=NONE;
-  character_set_state(c,CHR_STATE_STAND_R);
+  character_set_state(c,CHR_STATE_STAND);
+  DIRECTION_SET_RIGHT(&c->body)
 
   switch(c->kind)
     {
@@ -126,78 +127,72 @@ void character_state_tick(character_t *c)
 
   switch(c->state)
     {
-    case CHR_STATE_STAND_L:
-    case CHR_STATE_STAND_R:
+    case CHR_STATE_STAND:
       c->clock=0;
-      if(!IS_ON_A_FLOOR(b->event))
+      if(!IS_ON_A_FLOOR(b->flags))
 	{
-	  character_set_state(c, (c->state==CHR_STATE_STAND_L)?(CHR_STATE_FALL_L):(CHR_STATE_FALL_R));
+	  character_set_state(c, CHR_STATE_FALL);
 	  break;
 	}
       
       if(IS_HIT(b))
 	{
-	  character_set_state(c,(c->state==CHR_STATE_STAND_L)?(CHR_STATE_GET_HIT_TO_DEATH_L):(CHR_STATE_GET_HIT_TO_DEATH_R));
+	  character_set_state(c,CHR_STATE_GET_HIT_TO_DEATH);
 	  c->life=0;
 	  CLEAR_HIT(b);
 	}
-      else if(c->state==CHR_STATE_STAND_L && ((c->key_pressed & (UP | LEFT))==(UP | LEFT)))
+      else if(c->state==CHR_STATE_STAND && DIRECTION_IS_LEFT(b) && ((c->key_pressed & (UP | LEFT))==(UP | LEFT)))
 	{
-	  character_set_state(c, CHR_STATE_JUMP_FWD_L);
+	  character_set_state(c, CHR_STATE_JUMP_FWD);
 	}
-      else if(c->state==CHR_STATE_STAND_R && ((c->key_pressed & (UP | RIGHT))==(UP | RIGHT)))
+      else if(c->state==CHR_STATE_STAND && DIRECTION_IS_RIGHT(b) && ((c->key_pressed & (UP | RIGHT))==(UP | RIGHT)))
 	{
-	  character_set_state(c, CHR_STATE_JUMP_FWD_R);
+	  character_set_state(c, CHR_STATE_JUMP_FWD);
 	}
       else if((c->key_pressed & (SHIFT | LEFT)) == (SHIFT | LEFT))
 	{
-	  character_set_state(c, CHR_STATE_STEP_L);
+	  character_set_state(c, CHR_STATE_STEP);
 	}
       else if((c->key_pressed & (SHIFT | RIGHT)) == (SHIFT | RIGHT))
 	{
-	  character_set_state(c, CHR_STATE_STEP_R);
+	  character_set_state(c, CHR_STATE_STEP);
 	}
       else if(c->key_pressed & UP)
 	{
-	  if(c->state==CHR_STATE_STAND_L)
-	    {
-	      character_set_state(c, CHR_STATE_JUMP_L);
-	    }
-	  else
-	    {
-	      character_set_state(c, CHR_STATE_JUMP_R);
-	    }
+	  character_set_state(c, CHR_STATE_JUMP);
 	}
       else if(c->key_pressed & LEFT)
 	{
-	  if(c->state==CHR_STATE_STAND_L)
+	  if(DIRECTION_IS_LEFT(b))
 	    {
-	      character_set_state(c, CHR_STATE_RUN_L);
+	      character_set_state(c, CHR_STATE_RUN);
 	    }
 	  else
 	    {
-	      character_set_state(c, CHR_STATE_CHANGE_DIR_R2L);
+	      character_set_state(c, CHR_STATE_CHANGE_DIR);
+	      
 	    }
 	}
       else if(c->key_pressed & RIGHT)
 	{
-	  if(c->state==CHR_STATE_STAND_R)
+	  if(DIRECTION_IS_RIGHT(b))
 	    {
-	      character_set_state(c, CHR_STATE_RUN_R);
+	      character_set_state(c, CHR_STATE_RUN);
 	    }
 	  else
 	    {
-	      character_set_state(c, CHR_STATE_CHANGE_DIR_L2R);
+	      character_set_state(c, CHR_STATE_CHANGE_DIR);
+	      
 	    }
 
 	}
       else if(c->key_pressed & DOWN)
 	{
-	  if(c->state==CHR_STATE_STAND_L)
+	  if(DIRECTION_IS_LEFT(b))
 	    {
 	      if(level_close_to_down_edge_l(b->pos))
 		{	  
-		  character_set_state(c, CHR_STATE_CLIMB_DOWN_L);
+		  character_set_state(c, CHR_STATE_CLIMB_DOWN);
 		  b->suspend_dynamics=1;
 		  //b->pos[0]+=1000;
 		  b->pos[1]-=12000;
@@ -205,14 +200,14 @@ void character_state_tick(character_t *c)
 		}
 	      else
 		{
-		  character_set_state(c, CHR_STATE_CROUCH_L);
+		  character_set_state(c, CHR_STATE_CROUCH);
 		}
 	    }
 	  else
 	    {
 	      if(level_close_to_down_edge_r(b->pos))
 		{	  
-		  character_set_state(c, CHR_STATE_CLIMB_DOWN_R);
+		  character_set_state(c, CHR_STATE_CLIMB_DOWN);
 		  b->suspend_dynamics=1;
 		  //b->pos[0]-=1000;
 		  b->pos[1]-=12000;
@@ -220,63 +215,68 @@ void character_state_tick(character_t *c)
 		}
 	      else
 		{
-		  character_set_state(c, CHR_STATE_CROUCH_R);
+		  character_set_state(c, CHR_STATE_CROUCH);
 		}
 	      
 	    }
 	}
       else if(c->key_pressed & CTRL)
 	{
-	  character_set_state(c, (c->state==CHR_STATE_STAND_L)?(CHR_STATE_FIGHT_UNSHEATHE_L):(CHR_STATE_FIGHT_UNSHEATHE_R));
+	  character_set_state(c, CHR_STATE_FIGHT_UNSHEATHE);
 	}
       else if(c->key_pressed & P_BUTTON)
 	{
-	  character_set_state(c, (c->state==CHR_STATE_STAND_L)?(CHR_STATE_GET_POTION_L):(CHR_STATE_GET_POTION_R));
+	  character_set_state(c, CHR_STATE_GET_POTION);
 	}
       break;
 
-    case CHR_STATE_JUMP_L:
-    case CHR_STATE_JUMP_R:
+    case CHR_STATE_JUMP:
       if(c->clock==10)
 	{
 	  //b->acc[1]+=EXT_ACCEL_Y;
 	}
       else if(c->clock==15)
 	{
-	  if((c->state==CHR_STATE_JUMP_L && level_close_to_up_edge_l(b->pos)) || (c->state==CHR_STATE_JUMP_R && level_close_to_up_edge_r(b->pos)))
+	  if((c->state==CHR_STATE_JUMP && DIRECTION_IS_LEFT(b) && level_close_to_up_edge_l(b->pos)) || 
+	     (c->state==CHR_STATE_JUMP && DIRECTION_IS_RIGHT(b) && level_close_to_up_edge_r(b->pos)))
 	    {
 	      printf("%d %d, move state to climbing up\n",b->pos[0],b->pos[1]);
-	      character_set_state(c, (c->state==CHR_STATE_JUMP_L)?(CHR_STATE_CLIMB_UP_L):(CHR_STATE_CLIMB_UP_R));
+	      character_set_state(c, CHR_STATE_CLIMB_UP);
 	      b->suspend_dynamics=1;
 	      break;
 	    }
 	}
       else if(c->clock==20)
 	{
-	  character_set_state(c, (c->state==CHR_STATE_JUMP_L)?(CHR_STATE_STAND_L):(CHR_STATE_STAND_R));
+	  character_set_state(c, CHR_STATE_STAND);
 	  break;
 	}
 
       c->clock++;
       break;
-    case CHR_STATE_RUN_L:
-      if(!IS_ON_A_FLOOR(b->event))
+    case CHR_STATE_RUN:
+      if(!IS_ON_A_FLOOR(b->flags))
 	{
-	  character_set_state(c, CHR_STATE_FALL_L);
+	  character_set_state(c, CHR_STATE_FALL);
 	  break;
 	}
 
-       if(c->key_pressed & RIGHT)
+      if(((c->key_pressed & RIGHT) && DIRECTION_IS_LEFT(b)) ||
+	 ((c->key_pressed & LEFT) && DIRECTION_IS_RIGHT(b)))
 	{
-	  character_set_state(c, CHR_STATE_INVERT_L2R);
+	  character_set_state(c, CHR_STATE_RUN_CHANGE_DIR);
 	  break;
 	}
-       else if(c->key_pressed & LEFT)
+      else if((c->key_pressed & LEFT) || (c->key_pressed & RIGHT))
 	{
-	  b->acc[0]-=EXT_ACCEL_X;
+	  if(c->key_pressed & LEFT)
+	    b->acc[0]-=EXT_ACCEL_X;
+	  else
+	    b->acc[0]+=EXT_ACCEL_X;
+
 	  if(c->key_pressed & UP)
 	    {
-	      character_set_state(c, CHR_STATE_RUN_JUMP_L);
+	      character_set_state(c, CHR_STATE_RUN_JUMP);
 	      break;
 	    }
 	  if(c->clock>12)
@@ -284,19 +284,19 @@ void character_state_tick(character_t *c)
 	}
        else if(c->key_pressed & DOWN)
 	{
-	  character_set_state(c, CHR_STATE_CROUCH_L);
+	  character_set_state(c, CHR_STATE_CROUCH);
 	  break;
 	}
-      else
+       else
 	{
 	  if(c->clock>0)
 	    {
-	      character_set_state(c, CHR_STATE_BRAKE_L);
+	      character_set_state(c, CHR_STATE_BRAKE);
 	      break;
 	    }
 	  else
 	    {
-	      character_set_state(c, CHR_STATE_STAND_L);
+	      character_set_state(c, CHR_STATE_STAND);
 	      break;
 	    }
 	}
@@ -306,130 +306,49 @@ void character_state_tick(character_t *c)
 	 c->clock=4;
 
        break;
-    case CHR_STATE_RUN_R:
-      if(!IS_ON_A_FLOOR(b->event))
-	{
-	  character_set_state(c, CHR_STATE_FALL_R);
-	  break;
-	}
-      if(c->key_pressed & LEFT)
-	{
-	  character_set_state(c, CHR_STATE_INVERT_R2L);
-	}
-      else if(c->key_pressed & RIGHT)
-	{
-	  b->acc[0]+=EXT_ACCEL_X;
-	  if(c->key_pressed & UP)
-	    {
-	      character_set_state(c, CHR_STATE_RUN_JUMP_R);
-	    }
 
-	  
-	}
-      else if(c->key_pressed & DOWN)
-	{
-	  character_set_state(c, CHR_STATE_CROUCH_R);
-	  break;
-	}
-      else
-	{
-	  if(c->clock>0)
-	    {
-	      character_set_state(c, CHR_STATE_BRAKE_R);
-	      break;
-	    }
-	  else
-	    {
-	      character_set_state(c, CHR_STATE_STAND_R);
-	    }
-	}
-
-      c->clock++;
-      if(c->clock>12)
-	c->clock=4;
-      break;
-    case CHR_STATE_BRAKE_L:
-    case CHR_STATE_BRAKE_R:
+    case CHR_STATE_BRAKE:
       if(c->clock==7)
 	{
-	  if(c->state==CHR_STATE_BRAKE_L)
-	    {
-	      character_set_state(c, CHR_STATE_STAND_L);
-	      break;
-	      /*if(c->key_pressed & RIGHT)
-		{
-		  c->state=CHR_STATE_INVERT_L2R;
-		}
-		c->clock=0;*/
-	    }
-	  else
-	    {
-	      character_set_state(c, CHR_STATE_STAND_R);
-	      break;
-	      /*if(c->key_pressed & LEFT)
-		{
-		  c->state=CHR_STATE_INVERT_R2L;
-		}
-		c->clock=0;*/
-	    }
+	  character_set_state(c, CHR_STATE_STAND);
+	  break;
 	}
       c->clock++;      
       break;
 
-    case CHR_STATE_INVERT_L2R:
-      if(c->clock==8)
+    case CHR_STATE_RUN_CHANGE_DIR:
+      if(c->clock==6)
 	{
-	  character_set_state(c, CHR_STATE_RUN_R);
+	  character_set_state(c, CHR_STATE_RUN);
+	  DIRECTION_TOGGLE(b);
 	  c->clock=3;
 	  break;
 	}
       c->clock++;
       break;
-    case CHR_STATE_INVERT_R2L:
-      if(c->clock==8)
-	{
-	  character_set_state(c, CHR_STATE_RUN_L);
-	  c->clock=3;
-	  break;
-	}
-      c->clock++;
-      break;
-    case CHR_STATE_CHANGE_DIR_L2R:
+
+    case CHR_STATE_CHANGE_DIR:
       if(c->clock==7)
 	{
-	  if(c->key_pressed & RIGHT)
+	  DIRECTION_TOGGLE(b);
+	  if((c->key_pressed & RIGHT) || (c->key_pressed & LEFT))
 	    {
-	      character_set_state(c, CHR_STATE_RUN_R);
-	      b->acc[0]+=EXT_ACCEL_X;
+	      character_set_state(c, CHR_STATE_RUN);
+	      if(DIRECTION_IS_LEFT(b))
+		b->acc[0]+=EXT_ACCEL_X;
+	      else
+		b->acc[0]-=EXT_ACCEL_X;
 	      break;
 	    }
 	  else
 	    {
-	      character_set_state(c, CHR_STATE_STAND_R);
+	      character_set_state(c, CHR_STATE_STAND);
 	      break;
 	    }
 	}
       c->clock++;
       break;
-    case CHR_STATE_CHANGE_DIR_R2L:
-      if(c->clock==7)
-	{
-	  if(c->key_pressed & LEFT)
-	    {
-	      character_set_state(c, CHR_STATE_RUN_L);
-	      b->acc[0]-=EXT_ACCEL_X;
-	      break;
-	    }
-	  else
-	    {
-	      character_set_state(c, CHR_STATE_STAND_L);
-	      break;
-	    }
-	}
-      c->clock++;
-      break;
-    case CHR_STATE_CROUCH_L:
-    case CHR_STATE_CROUCH_R:
+    case CHR_STATE_CROUCH:
       if(c->key_pressed & DOWN)
 	{
 	  if(c->clock!=4)
@@ -442,17 +361,20 @@ void character_state_tick(character_t *c)
 	  
 	  if(c->clock==12)
 	    {
-	      character_set_state(c, (c->state==CHR_STATE_CROUCH_L)?CHR_STATE_STAND_L:CHR_STATE_STAND_R);
+	      character_set_state(c, CHR_STATE_STAND);
 	      break;
 	    }
 	  c->clock++;
 	}
       break;
 
-    case CHR_STATE_RUN_JUMP_L:
+    case CHR_STATE_RUN_JUMP:
       if(c->clock<8)
 	{
-	  b->acc[0]-=EXT_ACCEL_X;
+	  if(DIRECTION_IS_LEFT(b))
+	    b->acc[0]-=EXT_ACCEL_X;
+	  else
+	    b->acc[0]+=EXT_ACCEL_X;
 	}
       if(c->clock==5)
 	{
@@ -460,31 +382,20 @@ void character_state_tick(character_t *c)
 	}
       else if(c->clock==10)
 	{
-	  character_set_state(c, CHR_STATE_RUN_L);
+	  character_set_state(c, CHR_STATE_RUN);
 	}
       c->clock++;
       break;
 
-    case CHR_STATE_RUN_JUMP_R:
-      if(c->clock<8)
-	{
-	  b->acc[0]+=EXT_ACCEL_X;
-	}
-      if(c->clock==5)
-	{
-	  b->acc[1]+=EXT_ACCEL_Y;
-	}
-      else if(c->clock==10)
-	{
-	  character_set_state(c, CHR_STATE_RUN_R);
-	  break;
-	}
-      c->clock++;
-      break;
-    case CHR_STATE_JUMP_FWD_L:
+    
+    case CHR_STATE_JUMP_FWD:
       if(c->clock>5 && c->clock<8)
 	{
-	  b->acc[0]-=EXT_ACCEL_X;
+	  if(DIRECTION_IS_LEFT(b))
+	    b->acc[0]-=EXT_ACCEL_X;
+	  else
+	    b->acc[0]+=EXT_ACCEL_X;
+	  
 	}
       if(c->clock==7)
 	{
@@ -492,371 +403,227 @@ void character_state_tick(character_t *c)
 	}
       else if(c->clock==16)
 	{
-	  if(IS_ON_A_FLOOR(b->event))
+	  if(IS_ON_A_FLOOR(b->flags))
 	    {
-	      if(c->key_pressed & LEFT)
-		character_set_state(c, CHR_STATE_RUN_L);
+	      if((c->key_pressed & RIGHT) || (c->key_pressed & LEFT))
+		character_set_state(c, CHR_STATE_RUN);
 	      else
-		character_set_state(c, CHR_STATE_STAND_L);
+		character_set_state(c, CHR_STATE_STAND);
 	    }
 	  else
-	    character_set_state(c, CHR_STATE_FALL_L);
+	    character_set_state(c, CHR_STATE_FALL);
 
 	  c->clock=0;
 	  break;
 	}
       c->clock++;
       break;
-    case CHR_STATE_JUMP_FWD_R:
-      if(c->clock>5 && c->clock<8)
-	{
-	  b->acc[0]+=EXT_ACCEL_X;
-	}
-      if(c->clock==7)
-	{
-	  b->acc[1]+=EXT_ACCEL_Y;
-	}
-      else if(c->clock==16)
-	{
-	  if(IS_ON_A_FLOOR(b->event))
-	    {
-	      if(c->key_pressed & RIGHT)
-		character_set_state(c, CHR_STATE_RUN_R);
-	      else
-		character_set_state(c, CHR_STATE_STAND_R);
-	    }
-	  else
-	    character_set_state(c, CHR_STATE_FALL_R);
-
-	  c->clock=0;
-	  break;
-	}
-      c->clock++;
-      break;
-    case CHR_STATE_STEP_L:
+    
+    case CHR_STATE_STEP:
       if(c->clock==11)
 	{
-	  character_set_state(c, CHR_STATE_STAND_L);
+	  character_set_state(c, CHR_STATE_STAND);
 	  break;
 	}
       else if(c->clock==4)
 	{
 	  
-	  if(level_close_to_down_edge_r(b->pos))
+	  if(level_close_to_down_edge_r(b->pos) || level_close_to_down_edge_l(b->pos))
 	    {
-	      character_set_state(c, CHR_STATE_STEP_DANG_L);
+	      character_set_state(c, CHR_STATE_STEP_DANG);
 	      break;
 	    }
 	  else
 	    {
-	      b->acc[0]-=EXT_ACCEL_X;
+	      if(DIRECTION_IS_LEFT(b))
+		b->acc[0]-=EXT_ACCEL_X;
+	      else
+		b->acc[0]+=EXT_ACCEL_X;
 	    }
 	}
 
       c->clock++;
       break;
-    case CHR_STATE_STEP_R:
-      if(c->clock==11)
-	{
-	  character_set_state(c, CHR_STATE_STAND_R);
-	  break;
-	}
-      else if(c->clock==4)
-	{
-	  if(level_close_to_down_edge_l(b->pos))
-	    {
-	      character_set_state(c, CHR_STATE_STEP_DANG_R);
-	      break;
-	    }
-	  else
-	    {
-	      b->acc[0]+=EXT_ACCEL_X;
-	    }
-	}
-
-      c->clock++;
-      break;
-    case CHR_STATE_CLIMB_UP_L:   
+    case CHR_STATE_CLIMB_UP:
       if(c->clock==16)
 	{
-	  character_set_state(c, CHR_STATE_STAND_L);
-	  b->pos[0]-=1000;
+	  character_set_state(c, CHR_STATE_STAND);
+	  if(DIRECTION_IS_LEFT(b))
+	    b->pos[0]-=1000;
+	  else
+	    b->pos[0]+=1000;
+
 	  b->pos[1]+=12000;
 	  b->suspend_dynamics=0;
 	  break;
 	}
       c->clock++;
       break;
-    case CHR_STATE_CLIMB_UP_R:
-      if(c->clock==16)
-	{
-	  character_set_state(c, CHR_STATE_STAND_R);
-	  b->pos[0]+=1000;
-	  b->pos[1]+=12000;
-	  b->suspend_dynamics=0;
-	  break;
-	}
-      c->clock++;
-      break;
-    case CHR_STATE_CLIMB_DOWN_L:   
+    
+    case CHR_STATE_CLIMB_DOWN:
       if(c->clock==16)
 	{
 	  if(c->key_pressed & SHIFT)
 	    {
-	      character_set_state(c, CHR_STATE_HANG_L);
+	      character_set_state(c, CHR_STATE_HANG);
 	      //b->pos[0]+=1000;
 	      b->pos[1]+=1000;
 	      break;
 	    }
 	  else
 	    {
-	      character_set_state(c, CHR_STATE_STAND_L);
+	      character_set_state(c, CHR_STATE_STAND);
 	      b->suspend_dynamics=0;
 	      break;
 	    }
 	}
       c->clock++;
       break;
-    case CHR_STATE_CLIMB_DOWN_R:   
-      if(c->clock==16)
+    
+    case CHR_STATE_FALL:
+      if(IS_ON_A_FLOOR(b->flags))
 	{
-	  if(c->key_pressed & SHIFT)
-	    {
-	      character_set_state(c, CHR_STATE_HANG_R);
-	      //b->pos[0]-=1000;
-	      b->pos[1]+=1000;
-	      break;
-	    }
-	  else
-	    {
-	      character_set_state(c, CHR_STATE_STAND_R);
-	      b->suspend_dynamics=0;
-	      break;
-	    }
-	}
-      c->clock++;
-      break;
-    case CHR_STATE_FALL_L:
-      if(IS_ON_A_FLOOR(b->event))
-	{
-	  character_set_state(c, CHR_STATE_CROUCH_L);
+	  character_set_state(c, CHR_STATE_CROUCH);
 	}
       else if(c->clock!=4)
 	{
 	  c->clock++;
 	}
       break;
-    case CHR_STATE_FALL_R:
-      if(IS_ON_A_FLOOR(b->event))
-	{
-	  character_set_state(c, CHR_STATE_CROUCH_R);
-	}
-      else if(c->clock!=4)
-	{
-	  c->clock++;
-	}
+    
+    case CHR_STATE_STEP_DANG:
+      character_set_state(c, CHR_STATE_STAND);
       break;
-    case CHR_STATE_STEP_DANG_L:
-      character_set_state(c, CHR_STATE_STAND_L);
-      break;
-    case CHR_STATE_STEP_DANG_R:
-      character_set_state(c, CHR_STATE_STAND_R);
-      break;
-    case CHR_STATE_HANG_L:
+    case CHR_STATE_HANG:
       if(c->clock!=3)
 	c->clock++;
 
       if(!(c->key_pressed & SHIFT))
 	{
-	  character_set_state(c, CHR_STATE_STAND_L);
+	  character_set_state(c, CHR_STATE_STAND);
 	  b->suspend_dynamics=0;
 	  break;
 	}
       else if(c->key_pressed & UP)
 	{
-	  character_set_state(c, CHR_STATE_CLIMB_UP_L);
+	  character_set_state(c, CHR_STATE_CLIMB_UP);
 	  break;
 	}
       break;
 
-    case CHR_STATE_HANG_R:
-      if(c->clock!=3)
-	c->clock++;
+    
+    case CHR_STATE_FIGHT_UNSHEATHE:
+      if(c->clock==3)
+	{
+	  character_set_state(c, CHR_STATE_FIGHT_IN_GUARD);
+	  break;
+	}
+      c->clock++;
+      break;
+    case CHR_STATE_FIGHT_IN_GUARD:
+      c->clock=0;
+      if(IS_HIT(b))
+	{
+	  if(DIRECTION_IS_LEFT(b))
+	    b->acc[0]+=EXT_ACCEL_X;
+	  else
+	    b->acc[0]-=EXT_ACCEL_X;
 
-      if(!(c->key_pressed & SHIFT))
-	{
-	  character_set_state(c, CHR_STATE_STAND_R);
-	  b->suspend_dynamics=0;
-	  break;
-	}
-      else if(c->key_pressed & UP)
-	{
-	  character_set_state(c, CHR_STATE_CLIMB_UP_R);
-	  break;
-	}
-      break;
-    case CHR_STATE_FIGHT_UNSHEATHE_L:
-      if(c->clock==3)
-	{
-	  character_set_state(c, CHR_STATE_FIGHT_IN_GUARD_L);
-	  break;
-	}
-      c->clock++;
-      break;
-    case CHR_STATE_FIGHT_UNSHEATHE_R:
-      if(c->clock==3)
-	{
-	  character_set_state(c, CHR_STATE_FIGHT_IN_GUARD_R);
-	  break;
-	}
-      c->clock++;
-      break;
-    case CHR_STATE_FIGHT_IN_GUARD_L:
-      c->clock=0;
-      if(IS_HIT(b))
-	{
-	  b->acc[0]+=EXT_ACCEL_X;
 	  c->life--;
 	  if(c->life!=0)
-	    character_set_state(c, CHR_STATE_GET_HIT_L);
+	    character_set_state(c, CHR_STATE_GET_HIT);
 	  else
-	    character_set_state(c, CHR_STATE_GET_HIT_TO_DEATH_L);
+	    character_set_state(c, CHR_STATE_GET_HIT_TO_DEATH);
 	  CLEAR_HIT(b);
 	}
       else if(c->key_pressed & DOWN)
 	{
-	  character_set_state(c, CHR_STATE_FIGHT_SHEATHE_L);
+	  character_set_state(c, CHR_STATE_FIGHT_SHEATHE);
 	}
-      else if(c->key_pressed & LEFT)
+      else if(((c->key_pressed & LEFT) && DIRECTION_IS_LEFT(b)) ||
+	      ((c->key_pressed & RIGHT) && DIRECTION_IS_RIGHT(b)))
 	{
-	  character_set_state(c, CHR_STATE_FIGHT_FWD_L);
+	  character_set_state(c, CHR_STATE_FIGHT_FWD);
 	}
-      else if(c->key_pressed & RIGHT)
+      else if(((c->key_pressed & LEFT) && DIRECTION_IS_RIGHT(b)) ||
+	      ((c->key_pressed & RIGHT) && DIRECTION_IS_LEFT(b)))
 	{
-	  character_set_state(c, CHR_STATE_FIGHT_BACK_L);
-	}
-      else if(c->key_pressed & CTRL)
-	{
-	  character_set_state(c, CHR_STATE_FIGHT_ATTACK_L);
-	}
-      break;
-    case CHR_STATE_FIGHT_IN_GUARD_R:
-      c->clock=0;
-      if(IS_HIT(b))
-	{
-	  b->acc[0]-=EXT_ACCEL_X;
-	  c->life--;
-	  if(c->life!=0)
-	    character_set_state(c, CHR_STATE_GET_HIT_R);
-	  else
-	    character_set_state(c, CHR_STATE_GET_HIT_TO_DEATH_R);
-	  CLEAR_HIT(b);
-	}
-      else if(c->key_pressed & DOWN)
-	{
-	  character_set_state(c, CHR_STATE_FIGHT_SHEATHE_R);
-	}
-      else if(c->key_pressed & RIGHT)
-	{
-	  character_set_state(c, CHR_STATE_FIGHT_FWD_R);
-	}
-      else if(c->key_pressed & LEFT)
-	{
-	  character_set_state(c, CHR_STATE_FIGHT_BACK_R);
+	  character_set_state(c, CHR_STATE_FIGHT_BACK);
 	}
       else if(c->key_pressed & CTRL)
 	{
-	  character_set_state(c, CHR_STATE_FIGHT_ATTACK_R);
+	  character_set_state(c, CHR_STATE_FIGHT_ATTACK);
 	}
       break;
-    case CHR_STATE_FIGHT_SHEATHE_L:
+    case CHR_STATE_FIGHT_SHEATHE:
       if(c->clock==7)
 	{
-	  character_set_state(c, CHR_STATE_STAND_L);
+	  character_set_state(c, CHR_STATE_STAND);
 	  break;
 	}
       c->clock++;
       break;
-    case CHR_STATE_FIGHT_SHEATHE_R:
-      if(c->clock==7)
-	{
-	  character_set_state(c, CHR_STATE_STAND_R);
-	  break;
-	}
-      c->clock++;
-      break;
-    case CHR_STATE_FIGHT_FWD_L:
+    case CHR_STATE_FIGHT_FWD:
       if(c->clock==0)
 	{
-	  b->acc[0]-=EXT_ACCEL_X;
+	  if(DIRECTION_IS_LEFT(b))
+	    b->acc[0]-=EXT_ACCEL_X;
+	  else
+	    b->acc[0]+=EXT_ACCEL_X;
 	}
       else if(c->clock==2)
 	{
-	  character_set_state(c, CHR_STATE_FIGHT_IN_GUARD_L);
+	  character_set_state(c, CHR_STATE_FIGHT_IN_GUARD);
 	  break;
 	}
        
       c->clock++;
       break;
-    case CHR_STATE_FIGHT_FWD_R:
+    case CHR_STATE_FIGHT_BACK:
       if(c->clock==0)
 	{
-	  b->acc[0]+=EXT_ACCEL_X;
+	  if(DIRECTION_IS_LEFT(b))
+	    b->acc[0]+=EXT_ACCEL_X;
+	  else
+	    b->acc[0]-=EXT_ACCEL_X;
 	}
       else if(c->clock==2)
 	{
-	  character_set_state(c, CHR_STATE_FIGHT_IN_GUARD_R);
+	  character_set_state(c, CHR_STATE_FIGHT_IN_GUARD);
 	  break;
 	}
        
       c->clock++;
       break;
-    case CHR_STATE_FIGHT_BACK_L:
-      if(c->clock==0)
-	{
-	  b->acc[0]+=EXT_ACCEL_X;
-	}
-      else if(c->clock==2)
-	{
-	  character_set_state(c, CHR_STATE_FIGHT_IN_GUARD_L);
-	  break;
-	}
-       
-      c->clock++;
-      break;
-    case CHR_STATE_FIGHT_BACK_R:
-      if(c->clock==0)
-	{
-	  b->acc[0]-=EXT_ACCEL_X;
-	}
-      else if(c->clock==2)
-	{
-	  character_set_state(c, CHR_STATE_FIGHT_IN_GUARD_R);
-	  break;
-	}
-       
-      c->clock++;
-      break;
-    case CHR_STATE_FIGHT_ATTACK_L:
+    case CHR_STATE_FIGHT_ATTACK:
       if(IS_HIT(b))
 	{
-	  b->acc[0]+=EXT_ACCEL_X;
+	  if(DIRECTION_IS_LEFT(b))
+	    b->acc[0]+=EXT_ACCEL_X;
+	  else
+	    b->acc[0]-=EXT_ACCEL_X;
+
 	  c->life--;
 	  if(c->life!=0)
-	    character_set_state(c, CHR_STATE_GET_HIT_L);
+	    character_set_state(c, CHR_STATE_GET_HIT);
 	  else
-	    character_set_state(c, CHR_STATE_GET_HIT_TO_DEATH_L);
+	    character_set_state(c, CHR_STATE_GET_HIT_TO_DEATH);
 	  CLEAR_HIT(b);
+	  break;
 	}
 
       if(c->clock==5)
 	{
-	  character_set_state(c, CHR_STATE_FIGHT_IN_GUARD_L);
+	  character_set_state(c, CHR_STATE_FIGHT_IN_GUARD);
 	  break;
 	}
       else if(c->clock==2)
 	{
-	  opponent=character_get_close_l(c, 8000);
+	  if(DIRECTION_IS_LEFT(b))
+	    opponent=character_get_close_l(c, 8000);
+	  else
+	    opponent=character_get_close_r(c, 8000);
+
 	  if(opponent)
 	    {
 	      SET_HIT(&opponent->body);
@@ -865,89 +632,36 @@ void character_state_tick(character_t *c)
 	}
       c->clock++;
       break;
-    case CHR_STATE_FIGHT_ATTACK_R:
-      if(IS_HIT(b))
-	{
-	  b->acc[0]-=EXT_ACCEL_X;
-	  c->life--;
-	  if(c->life!=0)
-	    character_set_state(c, CHR_STATE_GET_HIT_R);
-	  else
-	    character_set_state(c, CHR_STATE_GET_HIT_TO_DEATH_R);
-	  CLEAR_HIT(b);
-	}
-
-      if(c->clock==5)
-	{
-	  character_set_state(c, CHR_STATE_FIGHT_IN_GUARD_R);
-	  break;
-	}
-      else if(c->clock==2)
-	{
-	  opponent=character_get_close_r(c, 8000);
-	  if(opponent)
-	    {
-	      SET_HIT(&opponent->body);
-	      //printf("opponent close: %x\n",(uint32_t)opponent);
-	    }
-	}
-      c->clock++;
-      break;
-    case CHR_STATE_GET_POTION_L:
+    case CHR_STATE_GET_POTION:
       if(c->clock==14)
 	{
-	  character_set_state(c, CHR_STATE_STAND_L);
+	  character_set_state(c, CHR_STATE_STAND);
 	  break;
 	}
       c->clock++;
       break;
-    case CHR_STATE_GET_POTION_R:
-      if(c->clock==14)
-	{
-	  character_set_state(c, CHR_STATE_STAND_R);
-	  break;
-	}
-      c->clock++;
-      break;
-    case CHR_STATE_GET_HIT_L:
+    case CHR_STATE_GET_HIT:
       if(c->clock==2)
 	{
-	  character_set_state(c, CHR_STATE_FIGHT_IN_GUARD_L);
+	  character_set_state(c, CHR_STATE_FIGHT_IN_GUARD);
 	  break;
 	}
       c->clock++;
       break;
-    case CHR_STATE_GET_HIT_R:
-      if(c->clock==2)
-	{
-	  character_set_state(c, CHR_STATE_FIGHT_IN_GUARD_R);
-	  break;
-	}
-      c->clock++;
-      break;
-    case CHR_STATE_GET_HIT_TO_DEATH_L:
+    case CHR_STATE_GET_HIT_TO_DEATH:
       if(c->clock==5)
 	{
-	  character_set_state(c, CHR_STATE_DEAD_L);
+	  character_set_state(c, CHR_STATE_DEAD);
 	  break;
 	}
       c->clock++;
       break;
-    case CHR_STATE_GET_HIT_TO_DEATH_R:
-      if(c->clock==5)
-	{
-	  character_set_state(c, CHR_STATE_DEAD_R);
-	  break;
-	}
-      c->clock++;
-      break;
-    case CHR_STATE_DEAD_L:
-    case CHR_STATE_DEAD_R:
+    case CHR_STATE_DEAD:
       c->clock=0;
       break;
     }
 
-  //printf("character %llx: life %d, event %.2x, state %.2x, clock: %d\n",(unsigned long long)c, c->life, b->event,c->state,c->clock);
+  printf("character %llx: life %d, flags %.2x, state %.2x, clock: %d\n",(unsigned long long)c, c->life, b->flags,c->state,c->clock);
 
 }
 
@@ -962,7 +676,17 @@ void character_set_initial_state(character_t *c, uint32_t *pos, float *vel, dire
       c->body.vel[i]=vel[i];
     }
 
-  character_set_state(c,(dir==DIR_LEFT)?(CHR_STATE_STAND_L):(CHR_STATE_STAND_R));
+  character_set_state(c,CHR_STATE_STAND);
+
+  if(dir==DIR_LEFT)
+    {
+      DIRECTION_SET_LEFT(&c->body);
+    }
+  else
+    {
+      DIRECTION_SET_RIGHT(&c->body);
+    }
+
 
 }
 

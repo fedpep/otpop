@@ -192,7 +192,7 @@ static void graph_set_clip(character_t* c)
   uint16_t clock;
   
 
-  fig->get_clip_indexes(c->state, &clip_indexes);
+  fig->get_clip_indexes(c->state, DIRECTION_IS_RIGHT(&c->body), &clip_indexes);
 
   if(fig->clip_start_index!=clip_indexes[0])
     {

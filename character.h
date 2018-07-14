@@ -6,8 +6,6 @@
 #include "motion.h"
 #include "graph.h"
 
-#define IS_FIGHTING(C)  (C->state==IN_GUARD || C->state==ATTACK || C->state==DEFENSE)
-
 
 character_t* character_init(character_kind_t kind);
 character_t* character_init_main(character_kind_t kind);
