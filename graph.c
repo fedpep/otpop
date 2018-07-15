@@ -185,14 +185,13 @@ void graph_update_quadrant(int32_t *pos)
   PRINTF("quadrant (%d,%d)\n",quadrant[0],quadrant[1]);
 }
 
-static void graph_set_clip(character_t* c)
+static SDL_Rect* graph_set_current_clip(character_t* c)
 {
+  static SDL_Rect clip;
   figure_t *fig=c->figure_ptr;
-  int *clip_indexes;
-  uint16_t clock;
+  const uint16_t *clip_indexes;
   
-
-  fig->get_clip_indexes(c->state, DIRECTION_IS_RIGHT(&c->body), &clip_indexes);
+  fig->get_clip_indexes(c->state, &clip_indexes);
 
   if(fig->clip_start_index!=clip_indexes[0])
     {
@@ -206,6 +205,18 @@ static void graph_set_clip(character_t* c)
   else
     fig->clip_current_index+=c->clock;
   
+  clip.x=fig->clips[fig->clip_current_index].x;
+
+  if(DIRECTION_IS_RIGHT(&c->body))
+    {
+      clip.x+=fig->l2r_x_offset;
+    }
+
+  clip.y=fig->clips[fig->clip_current_index].y;
+  clip.w=fig->clips[fig->clip_current_index].w;
+  clip.h=fig->clips[fig->clip_current_index].h;
+  
+  return &clip;
 }
 
 
@@ -215,7 +226,7 @@ void graph_update(void)
   character_t* character;
   figure_t* fig_ptr;
   uint32_t color;
-  SDL_Rect clip;
+  SDL_Rect *current_clip;
 
   SDL_FillRect(screen, NULL, 0x221122);
   
@@ -228,16 +239,14 @@ void graph_update(void)
 	{
 	  fig_ptr = character->figure_ptr;
 	  graph_calculate_screen_coordinates(character->body.pos[0],character->body.pos[1],&fig_ptr->fig_rect.x,&fig_ptr->fig_rect.y);
-	  /*fig_ptr->fig_rect.x-=fig_ptr->fig_rect.w/2;
-	  fig_ptr->fig_rect.y-=fig_ptr->fig_rect.h;*/
 
-	  graph_set_clip(character);
+	  current_clip=graph_set_current_clip(character);
 
-	  fig_ptr->fig_rect.x-=(fig_ptr->clips[fig_ptr->clip_current_index].w/2);//*100/SCALE;
-	  fig_ptr->fig_rect.y-=(fig_ptr->clips[fig_ptr->clip_current_index].h);//*100/SCALE;
+	  fig_ptr->fig_rect.x-=current_clip->w/2;//*100/SCALE;
+	  fig_ptr->fig_rect.y-=current_clip->h;//*100/SCALE;
 
 
-	  SDL_BlitSurface(fig_ptr->fig_surf , &fig_ptr->clips[fig_ptr->clip_current_index] , screen , &fig_ptr->fig_rect);
+	  SDL_BlitSurface(fig_ptr->fig_surf, current_clip, screen, &fig_ptr->fig_rect);
 	
 	}
       character=character->next;

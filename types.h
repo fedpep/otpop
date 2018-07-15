@@ -93,11 +93,12 @@ typedef struct
 {
   SDL_Surface *fig_surf;
   SDL_Rect fig_rect;
-  SDL_Rect *clips;
+  const SDL_Rect *clips;
   uint32_t clips_size;
   uint32_t clip_start_index;
   uint32_t clip_current_index;
-  void (*get_clip_indexes)(chr_state_t s, uint8_t direction, int **ind);
+  void (*get_clip_indexes)(chr_state_t s, const uint16_t **ind);
+  uint32_t l2r_x_offset;
 } figure_t;
 
 
