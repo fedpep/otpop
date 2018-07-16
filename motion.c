@@ -173,7 +173,7 @@ static void motion_apply_characters(body_t *b, uint32_t dt)
       cb=&c->body;
       
       /* we want to avoid to do the computation against ourself... move on in this case! */
-      if(cb!=b)
+      if(cb!=b && c->life!=0)
 	{	  
 	  positive_cross=b->pos[0]<=cb->pos[0] && pos_p[0]>=cb->pos[0] && ABS(b->pos[1]-cb->pos[1])<=cb->dim[1]/2;
 	  negative_cross=b->pos[0]>=cb->pos[0] && pos_p[0]<=cb->pos[0] && ABS(b->pos[1]-cb->pos[1])<=cb->dim[1]/2;

@@ -571,7 +571,7 @@ void character_state_tick(character_t *c)
 	  else
 	    b->acc[0]+=EXT_ACCEL_X;
 	}
-      else if(c->clock==2)
+      else if(c->clock==4)
 	{
 	  character_set_state(c, CHR_STATE_FIGHT_IN_GUARD);
 	  break;
@@ -587,7 +587,7 @@ void character_state_tick(character_t *c)
 	  else
 	    b->acc[0]-=EXT_ACCEL_X;
 	}
-      else if(c->clock==2)
+      else if(c->clock==4)
 	{
 	  character_set_state(c, CHR_STATE_FIGHT_IN_GUARD);
 	  break;

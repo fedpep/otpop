@@ -39,18 +39,19 @@ void main(void)
   p[0]=36000;p[1]=20000;
   v[0]=0;v[1]=0;
   character_set_initial_state(c, p, v, DIR_RIGHT);
-
+  
+  
   c=character_init(GUARD);
   p[0]=15000;p[1]=70000;
   v[0]=0;v[1]=0;
   character_set_initial_state(c, p, v, DIR_LEFT);
 
 
-  /*
   c=character_init(GUARD);
-  p[0]=80000;p[1]=20000;
-  motion_set_pos(&c->body,p);
-  */
+  p[0]=96000;p[1]=20000;
+  v[0]=0;v[1]=0;
+  character_set_initial_state(c, p, v, DIR_LEFT);
+  
 
   while(1)
     {

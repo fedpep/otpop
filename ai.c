@@ -67,6 +67,7 @@ void ai_command(character_t *c)
       break;
       
     case CHR_STATE_FIGHT_IN_GUARD:
+      
       motion_body_close=(DIRECTION_IS_LEFT(&c->body))?(motion_body_close_l):(motion_body_close_r);
       if(!motion_body_close(&c->body, &main_character->body, 20000))
 	{

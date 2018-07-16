@@ -200,11 +200,11 @@ static const SDL_Rect clips[]={
 
 n=0
 for i in range(len(clips)):
-    #print i,' - '
+    print i,' - '
     for c in clips[i]:
         content+="     {.x=%d,.y=%d,.w=%d,.h=%d},\n"%(c.x,c.y,c.w,c.h)
         n+=1
-        #print ' ',c
+        print ' ',c
 content+="""};
 
 """

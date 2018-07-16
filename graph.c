@@ -201,9 +201,9 @@ static SDL_Rect* graph_set_current_clip(character_t* c)
   fig->clip_current_index=fig->clip_start_index;
   
   if(clip_indexes[2])
-    fig->clip_current_index-=c->clock;
+    fig->clip_current_index-=c->clock%clip_indexes[1];
   else
-    fig->clip_current_index+=c->clock;
+    fig->clip_current_index+=c->clock%clip_indexes[1];
   
   clip.x=fig->clips[fig->clip_current_index].x;
 
@@ -216,6 +216,7 @@ static SDL_Rect* graph_set_current_clip(character_t* c)
   clip.w=fig->clips[fig->clip_current_index].w;
   clip.h=fig->clips[fig->clip_current_index].h;
   
+  //printf ("current idx %d, x=%d, y=%d\n",fig->clip_current_index,clip.x,clip.y);
   return &clip;
 }
 
@@ -228,7 +229,7 @@ void graph_update(void)
   uint32_t color;
   SDL_Rect *current_clip;
 
-  SDL_FillRect(screen, NULL, 0x221122);
+  SDL_FillRect(screen, NULL, BACKGROUND_COLOR);
   
   graph_update_quadrant(character_get_main()->body.pos);
 
