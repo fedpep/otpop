@@ -83,8 +83,10 @@ void main(void)
 	  PRINTF("-------%lx-main=%d-----\n",(long unsigned int) c,c==character_get_main());
 	  PRINTF("- life=%d\n", c->life);
 	  PRINTF("- state=%d\n", c->state);
+
 	  c=c->next;
 	}
+
       graph_update();
     }
   

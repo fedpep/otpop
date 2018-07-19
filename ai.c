@@ -3,7 +3,7 @@
 #include "keyboard.h"
 #include "ai.h"
 
-#define DEBUG
+//#define DEBUG
 
 #ifdef DEBUG
 #include <stdio.h>

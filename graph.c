@@ -1,4 +1,5 @@
 #include <SDL.h>
+#include <string.h>
 #include "character.h"
 #include "level.h"
 #include "graph.h"
@@ -21,6 +22,15 @@
 #endif
 
 
+
+typedef struct images_struct
+{
+  SDL_Surface *surf;
+  char* image_path;
+  struct images_struct *next;
+} image_t;
+
+static image_t *images;
 static SDL_Surface *screen=NULL;
 static uint32_t quadrant[2]={0,0};
 
@@ -42,7 +52,8 @@ void graph_init(void)
   
 
   screen=SDL_SetVideoMode( WIDTH, HEIGHT, 32 , flags);
-			   
+	
+  images=NULL;
   SDL_ShowCursor(SDL_DISABLE);
 
   /* Set a video mode */
@@ -61,21 +72,47 @@ void graph_init(void)
 
 }
 
-void* graph_init_figure(character_kind_t kind)
+static SDL_Surface* graph_load_image(char *image_path)
+{
+  image_t *img;
+  img=images;
+  while(img)
+    {
+      if(strcmp(image_path,img->image_path)==0)
+	{
+	  printf("%s already exists!\n", image_path);
+	  return img->surf;
+	}
+
+      img=img->next;
+    }
+
+
+  img=images;
+  images=(image_t*)malloc(sizeof(image_t));
+  images->surf=SDL_LoadBMP(image_path);
+  images->image_path=(char*)malloc(strlen(image_path)+1);
+  strcpy(images->image_path,image_path);
+  images->next=img;
+
+  return images->surf;
+}
+
+figure_t* graph_init_chr_figure(character_kind_t kind)
 {
   figure_t* fig_ptr;
   uint32_t colorkey;
   fig_ptr=(figure_t*) malloc(sizeof(figure_t));
-  fig_ptr->clip_current_index=0;
+ 
 
   switch(kind)
     {
     case KID:
-      fig_ptr->fig_surf=SDL_LoadBMP("./clips/clip_prince.bmp");//"./blue_rect.bmp");
+      fig_ptr->fig_surf=graph_load_image("./clips/clip_prince.bmp");
       clip_prince_init(fig_ptr);
       break;
     case GUARD:
-      fig_ptr->fig_surf=SDL_LoadBMP("./clips/clip_guard.bmp");//"./blue_rect.bmp");
+      fig_ptr->fig_surf=graph_load_image("./clips/clip_guard.bmp");
       clip_guard_init(fig_ptr);
       break;
     }
@@ -94,7 +131,37 @@ void* graph_init_figure(character_kind_t kind)
   colorkey=SDL_MapRGB(fig_ptr->fig_surf->format, 255,255,255);
   SDL_SetColorKey(fig_ptr->fig_surf, SDL_SRCCOLORKEY, colorkey);
 
-  return (void*)fig_ptr;
+  return fig_ptr;
+}
+
+
+figure_t* graph_init_lvl_figure(level_kind_t kind)
+{
+  figure_t* fig_ptr;
+  uint32_t colorkey;
+  fig_ptr=(figure_t*) malloc(sizeof(figure_t));
+ 
+
+  switch(kind)
+    {
+    case GROUND:
+      fig_ptr->fig_surf=graph_load_image("./clips/floor.bmp");
+      break;
+    
+    }
+  
+  if(!fig_ptr->fig_surf)
+    {
+      fprintf( stderr, "Could not load image: %s\n", SDL_GetError() );
+      return NULL;
+    }
+ 
+  
+  colorkey=SDL_MapRGB(fig_ptr->fig_surf->format, 255,255,255);
+  SDL_SetColorKey(fig_ptr->fig_surf, SDL_SRCCOLORKEY, colorkey);
+  
+
+  return fig_ptr;
 }
 
 
@@ -220,18 +287,85 @@ static SDL_Rect* graph_set_current_clip(character_t* c)
   return &clip;
 }
 
-
-void graph_update(void)
+/*
+static void graph_constraints_update_lines(void)
 {
   constraint_t* constraint;
+
+  PRINTF("------\n");
+  constraint=level_get_constraint_list();
+  while(constraint)
+    {
+      PRINTF("%d,%d, %d,%d\n",constraint->p_start[0],constraint->p_start[1],constraint->p_end[0],constraint->p_end[1]);
+      if(constraint_is_in_quadrant(constraint))
+	{
+	  PRINTF("  -->draw\n");
+
+	  graph_draw_line(constraint->p_start,constraint->p_end,0xffffff);
+	  
+	}
+      constraint=constraint->next;
+    }
+
+}
+*/
+
+static void graph_constraints_update(void)
+{
+  constraint_t* constraint;
+  figure_t* fig_ptr;
+  int16_t x,x_start,y_start,x_end,y_end;
+
+
+  PRINTF("------\n");
+  constraint=level_get_constraint_list();
+  while(constraint)
+    {
+      fig_ptr=constraint->figure_ptr;
+
+      PRINTF("%d,%d, %d,%d\n",constraint->p_start[0],constraint->p_start[1],constraint->p_end[0],constraint->p_end[1]);
+      if(constraint_is_in_quadrant(constraint))
+	{
+	  PRINTF("  -->draw\n");
+
+	  /* for now represent the constraints using white lines */
+	  graph_draw_line(constraint->p_start,constraint->p_end,0xffffff);
+
+#if 0
+	  /* TBD: this part plots the floor textures. Need to be rewritten at all considering the limits 
+	     and of the constraint currently visible */
+	  if(IS_A_FLOOR(constraint) && (point_is_in_quadrant(constraint->p_start[0], constraint->p_start[1]) || 
+					point_is_in_quadrant(constraint->p_end[0], constraint->p_end[1])))
+	  {
+	    
+	    graph_calculate_screen_coordinates(constraint->p_start[0], constraint->p_start[1], &x_start, &y_start);
+	    graph_calculate_screen_coordinates(constraint->p_end[0], constraint->p_end[1], &x_end, &y_end);
+	    
+	    
+	    for(x=x_end;x>x_start;x-=fig_ptr->fig_surf->w*7/12)
+	      {
+		fig_ptr->fig_rect.x=x-fig_ptr->fig_surf->w*3/4;
+		fig_ptr->fig_rect.y=y_start-fig_ptr->fig_surf->h/2;
+	    
+		SDL_BlitSurface(fig_ptr->fig_surf, NULL, screen, &fig_ptr->fig_rect);
+		
+	      }
+	      
+	  }
+#endif
+	  
+	}
+      constraint=constraint->next;
+    }
+
+}
+
+
+void graph_characters_update(void)
+{
   character_t* character;
   figure_t* fig_ptr;
-  uint32_t color;
   SDL_Rect *current_clip;
-
-  SDL_FillRect(screen, NULL, BACKGROUND_COLOR);
-  
-  graph_update_quadrant(character_get_main()->body.pos);
 
   character=character_get_list();
   while(character)
@@ -243,9 +377,10 @@ void graph_update(void)
 
 	  current_clip=graph_set_current_clip(character);
 
-	  fig_ptr->fig_rect.x-=current_clip->w/2;//*100/SCALE;
-	  fig_ptr->fig_rect.y-=current_clip->h;//*100/SCALE;
-
+	  fig_ptr->fig_rect.w=current_clip->w;
+	  fig_ptr->fig_rect.h=current_clip->h;
+	  fig_ptr->fig_rect.x-=fig_ptr->fig_rect.w/2;
+	  fig_ptr->fig_rect.y-=fig_ptr->fig_rect.h;
 
 	  SDL_BlitSurface(fig_ptr->fig_surf, current_clip, screen, &fig_ptr->fig_rect);
 	
@@ -253,21 +388,17 @@ void graph_update(void)
       character=character->next;
     }
   
-  PRINTF("------\n");
-  constraint=level_get_constraint_list();
-  while(constraint)
-    {
-      PRINTF("%d,%d, %d,%d\n",constraint->p_start[0],constraint->p_start[1],constraint->p_end[0],constraint->p_end[1]);
-      if(constraint_is_in_quadrant(constraint))
-	{
-	  PRINTF("  -->draw\n");
+}
 
-	  graph_draw_line(constraint->p_start,constraint->p_end,0xffffff);
-	}
-      constraint=constraint->next;
-    }
+void graph_update(void)
+{  
 
+  SDL_FillRect(screen, NULL, BACKGROUND_COLOR);
   
-  SDL_Flip(screen);
+  graph_update_quadrant(character_get_main()->body.pos);
+
+  graph_constraints_update();
+  graph_characters_update();
   
+  SDL_Flip(screen);  
 }

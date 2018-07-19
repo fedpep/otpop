@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include "level.h"
 #include "character.h"
+#include "graph.h"
 #include <stdio.h>
 
 #define ABS(x)  (((x)>=0)?(x):(-(x)))
@@ -85,7 +86,7 @@ static character_t* character_init_internal(character_kind_t kind)
       break;
     }
   motion_init_body(&c->body, dim, m);
-  c->figure_ptr=graph_init_figure(c->kind);
+  c->figure_ptr=graph_init_chr_figure(c->kind);
   
   return c;
 }
@@ -196,7 +197,7 @@ void character_state_tick(character_t *c)
 		  b->suspend_dynamics=1;
 		  //b->pos[0]+=1000;
 		  b->pos[1]-=12000;
-		  printf("%d %d, move state to climbing down\n",b->pos[0],b->pos[1]);
+		  //printf("%d %d, move state to climbing down\n",b->pos[0],b->pos[1]);
 		}
 	      else
 		{
@@ -211,7 +212,7 @@ void character_state_tick(character_t *c)
 		  b->suspend_dynamics=1;
 		  //b->pos[0]-=1000;
 		  b->pos[1]-=12000;
-		  printf("%d %d, move state to climbing down\n",b->pos[0],b->pos[1]);
+		  //printf("%d %d, move state to climbing down\n",b->pos[0],b->pos[1]);
 		}
 	      else
 		{
@@ -240,7 +241,7 @@ void character_state_tick(character_t *c)
 	  if((c->state==CHR_STATE_JUMP && DIRECTION_IS_LEFT(b) && level_close_to_up_edge_l(b->pos)) || 
 	     (c->state==CHR_STATE_JUMP && DIRECTION_IS_RIGHT(b) && level_close_to_up_edge_r(b->pos)))
 	    {
-	      printf("%d %d, move state to climbing up\n",b->pos[0],b->pos[1]);
+	      //printf("%d %d, move state to climbing up\n",b->pos[0],b->pos[1]);
 	      character_set_state(c, CHR_STATE_CLIMB_UP);
 	      b->suspend_dynamics=1;
 	      break;

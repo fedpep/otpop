@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "level.h"
+#include "graph.h"
 
 #define ABS(x)  (((x)>=0)?(x):(-(x)))
 
@@ -43,6 +44,11 @@ static void level_populate_constraints(void)
 		 &c->p_end[0], 
 		 &c->p_end[1]))	
 	  break;
+
+      if(IS_A_FLOOR(c))
+	{
+	  c->figure_ptr=graph_init_lvl_figure(GROUND);
+	}
 
       level_add_to_constraints_list(c);
 

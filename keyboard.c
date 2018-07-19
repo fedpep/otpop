@@ -42,6 +42,8 @@ keyboard_key_t keyboard_check(void)
 	      SDL_Quit();
 	      exit(0);
 	    }
+	  
+
 	  for(i=0;i<KEYM_SIZE;i++)
 	    {
 	      if(keym[i].sdl_event==event.key.keysym.sym)

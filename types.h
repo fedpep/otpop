@@ -4,27 +4,27 @@
 #include <SDL.h>
 
 #define NONE  0 
-#define UP    0x01  // when the shift amount is even it is a +
-#define DOWN  0x02  // when the shift amount is even it is a -
+#define UP    0x01
+#define DOWN  0x02
 #define RIGHT 0x04
 #define LEFT  0x08
 
-#define SHIFT  0x10
-#define CTRL  0x20
+#define SHIFT     0x10
+#define CTRL      0x20
 #define P_BUTTON  0x40
 
 
 #define ON_A_FLOOR        0x01
 #define ON_A_WALL         0x02
-#define DIRECTION_MASK   0x04
-#define GOT_A_HIT         0x80
+#define DIRECTION_MASK    0x04
+#define GOT_A_HIT         0x08
 
 
-#define DIRECTION_IS_RIGHT(BP)       ((BP)->flags & DIRECTION_MASK)
-#define DIRECTION_IS_LEFT(BP)        (!DIRECTION_IS_RIGHT(BP))
-#define DIRECTION_TOGGLE(BP)         {(BP)->flags ^= DIRECTION_MASK;}
+#define DIRECTION_IS_RIGHT(BP)         ((BP)->flags & DIRECTION_MASK)
+#define DIRECTION_IS_LEFT(BP)          (!DIRECTION_IS_RIGHT(BP))
+#define DIRECTION_TOGGLE(BP)           {(BP)->flags ^= DIRECTION_MASK;}
 #define DIRECTION_SET_LEFT(BP)         {(BP)->flags &= ~DIRECTION_MASK;}
-#define DIRECTION_SET_RIGHT(BP)         {(BP)->flags |= DIRECTION_MASK;}
+#define DIRECTION_SET_RIGHT(BP)        {(BP)->flags |= DIRECTION_MASK;}
 
 #define IS_HIT(BP)          ((BP)->flags & GOT_A_HIT)
 #define SET_HIT(BP)         ((BP)->flags |= GOT_A_HIT)
@@ -88,6 +88,12 @@ typedef enum
   PRINCESS,
 } character_kind_t;
 
+typedef enum
+{
+  GROUND=0,
+  WALL,
+  FLOATING_GROUND,
+} level_kind_t;
 
 typedef struct
 {
@@ -118,6 +124,7 @@ typedef struct constraint_struct
 {
   int32_t p_start[2];
   int32_t p_end[2];
+  figure_t* figure_ptr;
   struct constraint_struct *next;
 } constraint_t;
 

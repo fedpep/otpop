@@ -11,7 +11,8 @@
 
 void graph_init(void);
 void graph_update(void);
-void* graph_init_figure(character_kind_t kind);
+figure_t* graph_init_chr_figure(character_kind_t kind);
+figure_t* graph_init_lvl_figure(level_kind_t kind);
 
 #endif
 
