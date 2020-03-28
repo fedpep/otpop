@@ -1,7 +1,7 @@
 # ROW,offset,size,sign,rollback idx
 CLIPS_INDEXES={
     'CHR_STATE_STAND':['CLIP_ROW_0',0,1,0,0],
-    'CHR_STATE_RUN':['CLIP_ROW_1',8,12,0,5],
+    'CHR_STATE_RUN':['CLIP_ROW_1',8,13,0,4],
     'CHR_STATE_BRAKE':['CLIP_ROW_1',0,8,0,0],
     'CHR_STATE_RUN_CHANGE_DIR':['CLIP_ROW_0',9,9,0,0],
     'CHR_STATE_CHANGE_DIR':['CLIP_ROW_0',1,8,0,0],

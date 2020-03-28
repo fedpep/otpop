@@ -11,7 +11,7 @@ static character_t *main_character=NULL;
 
 static void character_set_state(character_t *c, chr_state_t new_state)
 {
-  //printf("character %llx: state change %.2x ->%.2x\n",(unsigned long long)c, c->state, new_state);
+  //printf("character %llx: state change %.2x -> %.2x\n",(unsigned long long)c, c->state, new_state);
   c->state=new_state;
   c->clock=0;
 }
@@ -189,7 +189,7 @@ void character_state_tick(character_t *c)
 	}
       else if(c->key_pressed & DOWN)
 	{
-	  if(DIRECTION_IS_LEFT(b))
+	  if(DIRECTION_IS_RIGHT(b))
 	    {
 	      if(level_close_to_down_edge_l(b->pos))
 		{	  
@@ -238,8 +238,8 @@ void character_state_tick(character_t *c)
 	}
       else if(c->clock==15)
 	{
-	  if((c->state==CHR_STATE_JUMP && DIRECTION_IS_LEFT(b) && level_close_to_up_edge_l(b->pos)) || 
-	     (c->state==CHR_STATE_JUMP && DIRECTION_IS_RIGHT(b) && level_close_to_up_edge_r(b->pos)))
+	  if((DIRECTION_IS_LEFT(b) && level_close_to_up_edge_r(b->pos)) || 
+	     (DIRECTION_IS_RIGHT(b) && level_close_to_up_edge_l(b->pos)))
 	    {
 	      //printf("%d %d, move state to climbing up\n",b->pos[0],b->pos[1]);
 	      character_set_state(c, CHR_STATE_CLIMB_UP);
@@ -305,7 +305,7 @@ void character_state_tick(character_t *c)
        c->clock++;
        if(c->clock>12)
 	 c->clock=4;
-
+       
        break;
 
     case CHR_STATE_BRAKE:
@@ -429,7 +429,8 @@ void character_state_tick(character_t *c)
       else if(c->clock==4)
 	{
 	  
-	  if(level_close_to_down_edge_r(b->pos) || level_close_to_down_edge_l(b->pos))
+	  if((DIRECTION_IS_LEFT(b) && level_close_to_down_edge_l(b->pos)) || 
+	     (DIRECTION_IS_RIGHT(b) && level_close_to_down_edge_r(b->pos)))
 	    {
 	      character_set_state(c, CHR_STATE_STEP_DANG);
 	      break;
@@ -618,12 +619,12 @@ void character_state_tick(character_t *c)
 	  character_set_state(c, CHR_STATE_FIGHT_IN_GUARD);
 	  break;
 	}
-      else if(c->clock==2)
+      else if(c->clock==1)
 	{
 	  if(DIRECTION_IS_LEFT(b))
-	    opponent=character_get_close_l(c, 8000);
+	    opponent=character_get_close_l(c, HIT_DISTANCE);
 	  else
-	    opponent=character_get_close_r(c, 8000);
+	    opponent=character_get_close_r(c, HIT_DISTANCE);
 
 	  if(opponent)
 	    {
@@ -662,7 +663,7 @@ void character_state_tick(character_t *c)
       break;
     }
 
-  printf("character %llx: life %d, flags %.2x, state %.2x, clock: %d\n",(unsigned long long)c, c->life, b->flags,c->state,c->clock);
+  //printf("character %llx: life %d, flags %.2x, state %.2x, clock: %d\n",(unsigned long long)c, c->life, b->flags,c->state,c->clock);
 
 }
 
@@ -691,128 +692,3 @@ void character_set_initial_state(character_t *c, uint32_t *pos, float *vel, dire
 
 }
 
-/*
-static uint8_t character_close_to_each_other(character_t *c1, character_t *c2, uint32_t distance)
-{
-  if(ABS(c1->body.pos[1]-c2->body.pos[1])<=c1->body.dim[1]/2 && ABS(c1->body.pos[0]-c2->body.pos[0])<distance)
-    return 1;
-
-  return 0;
-  }*/
-
-/*
-static character_t* character_get_close(character_t *c, uint32_t distance)
-{
-  character_t *char_list,*opponent_close=NULL;
-  char_list=character_get_list();
-  
-  while(char_list)
-    {
-      if(char_list!=c && character_close_to_each_other(char_list,c, distance))
-	{
-	  
-	  return char_list;
-	}
-      
-      char_list=char_list->next;
-    }
-  
-  return NULL;
-
-  }*/
-
-
-/*
-void character_state_check(character_t *c, uint32_t t)
-{
-  character_t *opponent_close=NULL;
-
-  switch(c->state)
-    {
-    case IDLE:
-      {
-	opponent_close=character_get_close(c, 30000);
-
-	if(opponent_close && opponent_close->life!=0)
-	  {
-	    c->state=IN_GUARD;
-	    c->body.ctrl=CTRL_VEL;
-	    return;
-	  }
-	break;
-	
-	
-      }
-      break;
-    case IDLE_R:
-      {
-	opponent_close=character_get_close(c,20000);
-
-	if((c->body.key_pressed & SHIFT) && opponent_close)
-	  {
-	    c->state=IN_GUARD;
-	    c->body.ctrl=CTRL_VEL;
-	    return;
-	  }
-	
-	if(opponent_close)
-	  {
-	    if(opponent_close->state==ATTACK)
-	      {
-		c->state=HIT;
-		c->body.ctrl=CTRL_VEL;
-		break;
-	      }
-	    
-	  }
-	if(!character_get_close(c,50000))
-	  {
-	    c->state=IDLE;
-	    c->body.ctrl=CTRL_ACC;
-	  }
-	
-      }
-      break;
-    case IN_GUARD:
-      {
-
-	if(c->body.key_pressed & DOWN)
-	  {
-	    c->state=IDLE_R;
-	    c->body.ctrl=CTRL_ACC;
-	    return;
-	  }
-	
-	if(c->body.key_pressed & SHIFT)
-	  {
-	    c->state=ATTACK;
-	  }
-	
-	if(c->body.key_pressed & UP)
-	  {
-	    c->state=DEFENSE;
-	  }
-
-	opponent_close=character_get_close(c,20000);
-	
-	if(!opponent_close)
-	  {
-	    c->state=IDLE;
-	    c->body.ctrl=CTRL_ACC;
-	  }
-      }
-      break;
-      
-    case ATTACK:
-      if(t-c->body.last_k_t>1000)
-	{
-	  //c->life--;
-	  c->state=IN_GUARD;
-	  c->body.last_k_t=t;
-	}
-      break;
-    }
-  
-}
-
-*/

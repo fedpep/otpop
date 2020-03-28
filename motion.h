@@ -5,7 +5,7 @@
 #include "keyboard.h"
 
 #define G_ACC              (-0.3f)
-#define EXT_ACCEL_X        (0.4f)
+#define EXT_ACCEL_X        (0.3f)
 #define EXT_ACCEL_Y        (-G_ACC*3)
 #define EXT_VEL_X        (40.0f)
 //#define EXT_VEL_Y        (-G_ACC*4)

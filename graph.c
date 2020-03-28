@@ -12,7 +12,7 @@
 #define HEIGHT (480)
 #define SCALE (100)
 
-//#define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
 #include <stdio.h>
@@ -146,6 +146,7 @@ figure_t* graph_init_lvl_figure(level_kind_t kind)
     {
     case GROUND:
       fig_ptr->fig_surf=graph_load_image("./clips/floor.bmp");
+      
       break;
     
     }
@@ -180,7 +181,7 @@ static uint8_t point_is_in_quadrant(int32_t x, int32_t y)
 static uint8_t constraint_is_in_quadrant(constraint_t* c)
 { 
   /* TBF: this is not covering the case the line extreme points are in 2 different quandrant than this one */
-  return 1;//(point_is_in_quadrant(c->p_start[0],c->p_start[1]) || point_is_in_quadrant(c->p_end[0],c->p_end[1]));
+  return (point_is_in_quadrant(c->p_start[0],c->p_start[1]) || point_is_in_quadrant(c->p_end[0],c->p_end[1]));
 }
 
 static uint8_t character_is_in_quadrant(character_t* c)
@@ -213,7 +214,7 @@ static void graph_draw_line(int32_t* p_start, int32_t* p_end, uint32_t pixel) {
 
   if(p_start[0]==p_end[0])
     {
-      PRINTF("v line s=%d,e=%d\n",p_start[1],p_end[1]);
+      //PRINTF("v line s=%d,e=%d\n",p_start[1],p_end[1]);
       /*vertical*/
       for(i=p_start[1];i<=p_end[1];i++)
 	{
@@ -226,7 +227,7 @@ static void graph_draw_line(int32_t* p_start, int32_t* p_end, uint32_t pixel) {
     }
   else if(p_start[1]==p_end[1])
     {
-      PRINTF("h line s=%d,e=%d\n",p_start[0],p_end[0]);
+      //PRINTF("h line s=%d,e=%d\n",p_start[0],p_end[0]);
       /*horizontal*/
       for(i=p_start[0];i<=p_end[0];i++)
 	{
@@ -287,28 +288,6 @@ static SDL_Rect* graph_set_current_clip(character_t* c)
   return &clip;
 }
 
-/*
-static void graph_constraints_update_lines(void)
-{
-  constraint_t* constraint;
-
-  PRINTF("------\n");
-  constraint=level_get_constraint_list();
-  while(constraint)
-    {
-      PRINTF("%d,%d, %d,%d\n",constraint->p_start[0],constraint->p_start[1],constraint->p_end[0],constraint->p_end[1]);
-      if(constraint_is_in_quadrant(constraint))
-	{
-	  PRINTF("  -->draw\n");
-
-	  graph_draw_line(constraint->p_start,constraint->p_end,0xffffff);
-	  
-	}
-      constraint=constraint->next;
-    }
-
-}
-*/
 
 static void graph_constraints_update(void)
 {
@@ -323,37 +302,58 @@ static void graph_constraints_update(void)
     {
       fig_ptr=constraint->figure_ptr;
 
-      PRINTF("%d,%d, %d,%d\n",constraint->p_start[0],constraint->p_start[1],constraint->p_end[0],constraint->p_end[1]);
-      if(constraint_is_in_quadrant(constraint))
+      
+      //if(constraint_is_in_quadrant(constraint))
+      if(IS_A_FLOOR(constraint))
 	{
-	  PRINTF("  -->draw\n");
+	  //PRINTF("  -->draw\n");
 
 	  /* for now represent the constraints using white lines */
 	  graph_draw_line(constraint->p_start,constraint->p_end,0xffffff);
 
-#if 0
 	  /* TBD: this part plots the floor textures. Need to be rewritten at all considering the limits 
 	     and of the constraint currently visible */
-	  if(IS_A_FLOOR(constraint) && (point_is_in_quadrant(constraint->p_start[0], constraint->p_start[1]) || 
-					point_is_in_quadrant(constraint->p_end[0], constraint->p_end[1])))
-	  {
+	  if(point_is_in_quadrant(constraint->p_start[0], constraint->p_start[1]) || point_is_in_quadrant(constraint->p_end[0], constraint->p_end[1]))
+	    {
+	      graph_calculate_screen_coordinates(constraint->p_start[0], constraint->p_start[1], &x_start, &y_start);
+	      //PRINTF("in_quadrant: start=(%d,%d), end=(%d,%d), edge=%d, sstart=(%d,%d)\n",constraint->p_start[0],constraint->p_start[1],constraint->p_end[0],constraint->p_end[1],constraint->edge,x_start,y_start);
 	    
-	    graph_calculate_screen_coordinates(constraint->p_start[0], constraint->p_start[1], &x_start, &y_start);
-	    graph_calculate_screen_coordinates(constraint->p_end[0], constraint->p_end[1], &x_end, &y_end);
+	
 	    
+	      fig_ptr->fig_rect.w=fig_ptr->fig_surf->w;
+	      fig_ptr->fig_rect.h=fig_ptr->fig_surf->h;
 	    
-	    for(x=x_end;x>x_start;x-=fig_ptr->fig_surf->w*7/12)
-	      {
-		fig_ptr->fig_rect.x=x-fig_ptr->fig_surf->w*3/4;
-		fig_ptr->fig_rect.y=y_start-fig_ptr->fig_surf->h/2;
+	      fig_ptr->fig_rect.x=x_start-fig_ptr->fig_rect.w/4;
+	      fig_ptr->fig_rect.y=y_start-fig_ptr->fig_rect.h/2;
 	    
-		SDL_BlitSurface(fig_ptr->fig_surf, NULL, screen, &fig_ptr->fig_rect);
-		
-	      }
+	      PRINTF("fig (on screen): (%d,%d;%d,%d)\n",fig_ptr->fig_rect.x,fig_ptr->fig_rect.y,fig_ptr->fig_rect.w,fig_ptr->fig_rect.h);
+	      SDL_BlitSurface(fig_ptr->fig_surf, NULL, screen, &fig_ptr->fig_rect); 
+	    }
+	  else if(point_is_in_quadrant(constraint->p_start[0]-fig_ptr->fig_surf->w/4, constraint->p_start[1]))
+	    {
+	      graph_calculate_screen_coordinates(constraint->p_start[0], constraint->p_start[1], &x_start, &y_start);
+	      fig_ptr->fig_rect.w=fig_ptr->fig_surf->w;///2;
+	      fig_ptr->fig_rect.h=fig_ptr->fig_surf->h;
+	    
+	      fig_ptr->fig_rect.x=WIDTH-fig_ptr->fig_rect.w/4;
+	      fig_ptr->fig_rect.y=y_start-fig_ptr->fig_rect.h/2;
+	    
 	      
-	  }
-#endif
-	  
+	      PRINTF("fig (right edge): (%d,%d;%d,%d)\n",fig_ptr->fig_rect.x,fig_ptr->fig_rect.y,fig_ptr->fig_rect.w,fig_ptr->fig_rect.h);
+	      SDL_BlitSurface(fig_ptr->fig_surf, NULL, screen, &fig_ptr->fig_rect);
+	    }
+	  else if(point_is_in_quadrant(constraint->p_end[0]+fig_ptr->fig_surf->w/4, constraint->p_end[1]))
+	    {
+	      graph_calculate_screen_coordinates(constraint->p_start[0], constraint->p_start[1], &x_start, &y_start);
+	      fig_ptr->fig_rect.w=fig_ptr->fig_surf->w;
+	      fig_ptr->fig_rect.h=fig_ptr->fig_surf->h;
+	    
+	      fig_ptr->fig_rect.x=-3*fig_ptr->fig_rect.w/4;
+	      fig_ptr->fig_rect.y=y_start-fig_ptr->fig_rect.h/2;
+	    
+	      PRINTF("fig (left edge): (%d,%d;%d,%d)\n",fig_ptr->fig_rect.x,fig_ptr->fig_rect.y,fig_ptr->fig_rect.w,fig_ptr->fig_rect.h);
+	      SDL_BlitSurface(fig_ptr->fig_surf, NULL, screen, &fig_ptr->fig_rect);
+	    }
 	}
       constraint=constraint->next;
     }
@@ -397,6 +397,7 @@ void graph_update(void)
   
   graph_update_quadrant(character_get_main()->body.pos);
 
+  
   graph_constraints_update();
   graph_characters_update();
   

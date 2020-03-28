@@ -8,6 +8,11 @@
 #define IS_A_FLOOR(C_POINT) ((C_POINT)->p_start[1]==(C_POINT)->p_end[1])
 #define IS_A_WALL(C_POINT)  ((C_POINT)->p_start[0]==(C_POINT)->p_end[0])
 
+typedef struct{
+  uint32_t x,y;
+  uint8_t floating;
+} brick_t;
+
 void level_init(uint32_t num);
 constraint_t* level_get_constraint_list(void);
 uint8_t level_close_to_up_edge_l(int32_t *p);

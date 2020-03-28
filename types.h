@@ -19,6 +19,8 @@
 #define DIRECTION_MASK    0x04
 #define GOT_A_HIT         0x08
 
+#define RIGHT_EDGE      0x01
+#define LEFT_EDGE       0x02
 
 #define DIRECTION_IS_RIGHT(BP)         ((BP)->flags & DIRECTION_MASK)
 #define DIRECTION_IS_LEFT(BP)          (!DIRECTION_IS_RIGHT(BP))
@@ -26,9 +28,16 @@
 #define DIRECTION_SET_LEFT(BP)         {(BP)->flags &= ~DIRECTION_MASK;}
 #define DIRECTION_SET_RIGHT(BP)        {(BP)->flags |= DIRECTION_MASK;}
 
+#define HIT_DISTANCE        (9000) 
 #define IS_HIT(BP)          ((BP)->flags & GOT_A_HIT)
 #define SET_HIT(BP)         ((BP)->flags |= GOT_A_HIT)
 #define CLEAR_HIT(BP)       ((BP)->flags &= ~GOT_A_HIT)
+
+#define IS_RIGHT_EDGE(CP)    ((CP)->edge & RIGHT_EDGE)
+#define SET_RIGHT_EDGE(CP)   ((CP)->edge |= RIGHT_EDGE)
+
+#define IS_LEFT_EDGE(CP)     ((CP)->edge & LEFT_EDGE)
+#define SET_LEFT_EDGE(CP)   ((CP)->edge |= LEFT_EDGE)
 
 typedef uint32_t keyboard_key_t;
 
@@ -124,6 +133,7 @@ typedef struct constraint_struct
 {
   int32_t p_start[2];
   int32_t p_end[2];
+  uint8_t edge;
   figure_t* figure_ptr;
   struct constraint_struct *next;
 } constraint_t;

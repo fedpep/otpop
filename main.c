@@ -34,15 +34,16 @@ void main(void)
   p[0]=0;p[1]=40000;
   v[0]=30;v[1]=0;
   character_set_initial_state(c, p, v, DIR_RIGHT);
-  
+
+#if 1
   c=character_init(GUARD);
-  p[0]=36000;p[1]=20000;
+  p[0]=26000;p[1]=20000;
   v[0]=0;v[1]=0;
   character_set_initial_state(c, p, v, DIR_RIGHT);
   
   
   c=character_init(GUARD);
-  p[0]=15000;p[1]=70000;
+  p[0]=15000;p[1]=40000;
   v[0]=0;v[1]=0;
   character_set_initial_state(c, p, v, DIR_LEFT);
 
@@ -51,7 +52,7 @@ void main(void)
   p[0]=96000;p[1]=20000;
   v[0]=0;v[1]=0;
   character_set_initial_state(c, p, v, DIR_LEFT);
-  
+#endif
 
   while(1)
     {

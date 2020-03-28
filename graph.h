@@ -5,7 +5,7 @@
 #include "types.h"
 
 
-//#define FULLSCREEN
+#define FULLSCREEN
 
 #define BACKGROUND_COLOR 0x221122
 

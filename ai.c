@@ -60,7 +60,7 @@ void ai_command(character_t *c)
     {
     case CHR_STATE_STAND:
       motion_body_close=(DIRECTION_IS_LEFT(&c->body))?(motion_body_close_l):(motion_body_close_r);
-      if(motion_body_close(&c->body, &main_character->body, 20000))
+      if(main_character->state != CHR_STATE_DEAD && motion_body_close(&c->body, &main_character->body, 20000))
 	{
 	  c->key_pressed|=CTRL;
 	}
@@ -69,7 +69,7 @@ void ai_command(character_t *c)
     case CHR_STATE_FIGHT_IN_GUARD:
       
       motion_body_close=(DIRECTION_IS_LEFT(&c->body))?(motion_body_close_l):(motion_body_close_r);
-      if(!motion_body_close(&c->body, &main_character->body, 20000))
+      if(main_character->state == CHR_STATE_DEAD || !motion_body_close(&c->body, &main_character->body, 20000))
 	{
 	  c->key_pressed|=DOWN;
 	}
